@@ -1,0 +1,1 @@
+ALTER TABLE payments ADD amount DECIMAL(12,2) NOT NULL
