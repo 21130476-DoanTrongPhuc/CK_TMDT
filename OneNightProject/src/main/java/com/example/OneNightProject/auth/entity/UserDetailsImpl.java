@@ -1,6 +1,7 @@
 package com.example.OneNightProject.auth.entity;
 
 import com.example.OneNightProject.user.dto.response.CustomerResponse;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RequiredArgsConstructor
+@Getter
 public class UserDetailsImpl implements UserDetails {
 
     private final CustomerResponse userResponse;

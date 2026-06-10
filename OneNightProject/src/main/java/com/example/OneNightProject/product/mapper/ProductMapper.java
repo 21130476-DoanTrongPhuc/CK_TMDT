@@ -83,18 +83,6 @@ public class ProductMapper {
                                 : null
                 )
 
-//                .brandId(
-//                        product.getBrand() != null
-//                                ? product.getBrand().getId()
-//                                : null
-//                )
-//
-//                .brandName(
-//                        product.getBrand() != null
-//                                ? product.getBrand().getName()
-//                                : null
-//                )
-
                 .sellerId(
                         product.getSeller().getId()
                 )

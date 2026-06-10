@@ -3,6 +3,7 @@ package com.example.OneNightProject.user.entity;
 import com.example.OneNightProject.auth.entity.OauthAccount;
 import com.example.OneNightProject.auth.enums.UserEnum;
 import com.example.OneNightProject.auth.enums.UserStatusEnum;
+import com.example.OneNightProject.review.entity.Review;
 import com.example.OneNightProject.user.enums.CustomerEnum;
 import com.example.OneNightProject.user.enums.CustomerStatusEnum;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -53,6 +54,13 @@ public class Users {
             orphanRemoval = true)
     @JsonManagedReference
     private List<ShippingAddress> addressList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            orphanRemoval = true)
+    @JsonManagedReference
+    private List<Review> reviewList = new ArrayList<>();
 
     // Helper method để đồng bộ cả 2 chiều
     public void setUserProfile(UserProfile userProfile) {

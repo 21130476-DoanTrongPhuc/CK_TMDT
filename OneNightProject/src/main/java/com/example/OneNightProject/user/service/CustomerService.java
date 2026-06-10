@@ -17,5 +17,5 @@ public interface CustomerService {
 
     CustomerResponse getByUsername(String username);
 
-    CustomerResponse changeUserPassword(Authentication authentication, ChangePassword request);
+    CustomerResponse changePassword(String token, ChangePassword request);
 }

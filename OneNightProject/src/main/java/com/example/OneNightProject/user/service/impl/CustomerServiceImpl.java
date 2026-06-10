@@ -1,5 +1,6 @@
 package com.example.OneNightProject.user.service.impl;
 
+import com.example.OneNightProject.auth.service.JwtService;
 import com.example.OneNightProject.common.api.ApiResponse;
 import com.example.OneNightProject.user.dto.request.ChangePassword;
 import com.example.OneNightProject.user.dto.request.CustomerRequest;
@@ -42,6 +43,8 @@ public class CustomerServiceImpl implements CustomerService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JavaMailSender mailSender;
+    @Autowired
+    private JwtService jwtService;
     @Override
     public CustomerResponse register(CustomerRequest request) {
 
@@ -144,23 +147,26 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerResponse changeUserPassword(Authentication authentication, ChangePassword request) {
-        if(customerRepository.existsByEmail(authentication.getName())){
-            Users users = customerRepository.findByEmail(authentication.getName());
-            boolean match = passwordEncoder.matches(request.getCurrentPassword(), users.getPassword());
+    public CustomerResponse changePassword(String authHeader, ChangePassword request) {
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
+        Users user = customerRepository.findByEmail(email);
+
+        if(customerRepository.existsByEmail(user.getEmail())){
+            boolean match = passwordEncoder.matches(request.getCurrentPassword(), user.getPassword());
             if(!match){
                 throw new RuntimeException("Current password is incorrect");
             }
-            if(request.getNewPassword().equals(request.getConfirmPassword())){
+            if(!request.getNewPassword().equals(request.getConfirmPassword())){
                 throw new RuntimeException("Passwords do not match");
             }
 
             // 4. Save new password
-            users.setPassword(new BCryptPasswordEncoder().encode(request.getNewPassword()));
+            user.setPassword(new BCryptPasswordEncoder().encode(request.getNewPassword()));
 
-            customerRepository.save(users);
+            customerRepository.save(user);
 
-            return customerMapper.toCustomerResposne(users);
+            return customerMapper.toCustomerResposne(user);
         }
         return null;
     }

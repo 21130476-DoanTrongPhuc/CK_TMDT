@@ -44,16 +44,11 @@ public class CartServiceImpl implements CartService {
 
         Users user = getCurrentUser(authHeader);
 
-        Cart cart =
-                cartRepository
-                        .findByUserId(user.getId())
+        Cart cart = cartRepository.findByUserId(user.getId())
                         .orElseGet(() -> {
-
-                            Cart newCart =
-                                    Cart.builder()
-                                            .user(user)
-                                            .build();
-
+                            Cart newCart = Cart.builder()
+                                    .user(user)
+                                    .build();
                             return cartRepository.save(newCart);
                         });
 

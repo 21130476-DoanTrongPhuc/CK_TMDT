@@ -119,9 +119,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         String token = authHeader.substring(7);
 
-        Users user =
-                userRepository.findByEmail(
-                        jwtService.extractUsername(token));
+        Users user = userRepository.findByEmail(jwtService.extractUsername(token));
 
         Review review =
                 reviewRepository.findById(reviewId)
@@ -134,10 +132,15 @@ public class ReviewServiceImpl implements ReviewService {
                     "Forbidden");
         }
 
+        List<Review> reviewList = user.getReviewList();
+        reviewList.remove(review);
+
+        userRepository.save(user);
+
+        reviewRepository.deleteById(review.getId());
+
         review.setDeletedAt(
                 LocalDateTime.now());
-
-        reviewRepository.save(review);
     }
 
     @Override

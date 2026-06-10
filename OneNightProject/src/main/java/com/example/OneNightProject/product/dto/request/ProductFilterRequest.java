@@ -27,4 +27,7 @@ public class ProductFilterRequest {
     private ProductStatus status;
 
     private Boolean allowCustomization;
+
+    // NEW
+    private String sortBy;
 }

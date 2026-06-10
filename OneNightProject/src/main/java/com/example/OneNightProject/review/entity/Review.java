@@ -3,6 +3,7 @@ package com.example.OneNightProject.review.entity;
 import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.review.enums.ReviewStatus;
 import com.example.OneNightProject.user.entity.Users;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +26,7 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
+    @JsonBackReference
     private Product product;
 
     private Integer rating;

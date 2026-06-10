@@ -38,8 +38,16 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.getByUsername(username));
     }
 
-    @PostMapping("/changingPassword")
-    public ResponseEntity<CustomerResponse> changePassword(Authentication authentication, @RequestBody ChangePassword request){
-        return ResponseEntity.ok(customerService.changeUserPassword(authentication, request));
+    @PutMapping("/change-password")
+    public ResponseEntity<CustomerResponse> changePassword(
+            @RequestHeader("Authorization") String token,
+            @RequestBody ChangePassword request
+    ){
+        return ResponseEntity.ok(
+                customerService.changePassword(
+                        token,
+                        request
+                )
+        );
     }
 }

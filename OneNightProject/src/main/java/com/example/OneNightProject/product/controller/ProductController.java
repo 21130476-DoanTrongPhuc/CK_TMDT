@@ -32,7 +32,9 @@ public class ProductController {
     @Autowired
     private ProductImageRepository imageRepository;
 
-    /* Phân trang san phẩm  */
+    /**
+     * Phân trang sản phẩm
+     */
     @GetMapping
     public ResponseEntity<Page<ProductResponse>>pagination(
             @RequestParam(defaultValue = "0") int page,
@@ -46,27 +48,43 @@ public class ProductController {
         return ResponseEntity.ok(paginate);
 
     }
-    /* Tìm sản phầm theo id */
+
+    /**
+     * Tìm sản phẩm theo ID
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getById(@PathVariable Long id){
         return ResponseEntity.ok(productService.getById(id));
     }
-    /* Thêm sản phẩm */
+
+    /**
+     * Tạo sản phẩm
+     */
     @PostMapping
     public ResponseEntity<ProductResponse> create(@RequestBody ProductRequest request){
         return ResponseEntity.ok(productService.create(request));
     }
-    /* Cập nhật sản phẩm */
+
+    /**
+     * Sửa sản phẩm
+     */
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> update(@PathVariable Long id, @RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.update(id, request));
     }
-    /* Xóa sản phẩm */
+
+    /**
+     * Xóa sảm phẩm
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         productService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    /**
+     * Tìm kiếm sản phẩm và lọc sản phẩm
+     */
     @PostMapping("/filter")
     public ResponseEntity<Page<ProductResponse>>
     filterProducts(
@@ -82,6 +100,9 @@ public class ProductController {
         );
     }
 
+    /**
+     * Thêm ảnh vào sản phẩm
+     */
     @PostMapping(value = "/upload/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProductImage upload(
             @PathVariable Long productId,
@@ -90,6 +111,9 @@ public class ProductController {
         return productImageService.uploadImage(productId, file);
     }
 
+    /**
+     * Lấy danh sách ảnh của product theo ID
+     */
     @GetMapping("getImage/{productId}")
     public ResponseEntity<?> getImages(
             @PathVariable Long productId

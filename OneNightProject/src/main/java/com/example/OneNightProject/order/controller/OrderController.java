@@ -18,11 +18,18 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
     @Autowired
     private OrderService orderService;
+
+    /**
+     * Tạo đơn hàng từ giỏ hàng và có thể cập nhật đơn hàng nếu giỏ hàng thay đổi
+     */
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@RequestHeader("Authorization") String authHeader, @RequestBody OrderRequest request){
         return ResponseEntity.ok(orderService.create(authHeader, request));
     }
 
+    /**
+     * Danh sách đơn hàng có chức năng lọc
+     */
     @PostMapping("/my-orders")
     public ResponseEntity<Page<OrderListResponse>>
     getMyOrders(
@@ -41,6 +48,9 @@ public class OrderController {
         );
     }
 
+    /**
+     * Xem đơn hàng chi tiết
+     */
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderDetailResponse>
     getOrderDetail(

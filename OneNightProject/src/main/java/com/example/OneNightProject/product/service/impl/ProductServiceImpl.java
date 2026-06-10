@@ -110,9 +110,90 @@ public class ProductServiceImpl implements ProductService {
         Specification<Product> spec =
                 ProductSpecification.filter(request);
 
+        Pageable sortedPageable =
+                buildPageable(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        request.getSortBy()
+                );
+
         return productRepository
-                .findAll(spec, pageable)
+                .findAll(spec, sortedPageable)
                 .map(productMapper::toResponse);
+    }
+
+    private Pageable buildPageable(
+            int page,
+            int size,
+            String sortBy
+    ) {
+
+        Sort sort = Sort.unsorted();
+
+        if(sortBy == null) {
+
+            return PageRequest.of(
+                    page,
+                    size
+            );
+        }
+
+        switch (sortBy) {
+
+            case "price_asc":
+
+                sort = Sort.by(
+                        "price"
+                ).ascending();
+
+                break;
+
+            case "price_desc":
+
+                sort = Sort.by(
+                        "price"
+                ).descending();
+
+                break;
+
+            case "name_asc":
+
+                sort = Sort.by(
+                        "name"
+                ).ascending();
+
+                break;
+
+            case "name_desc":
+
+                sort = Sort.by(
+                        "name"
+                ).descending();
+
+                break;
+
+            case "rating":
+
+                sort = Sort.by(
+                        "averageRating"
+                ).descending();
+
+                break;
+
+            case "popularity":
+
+                sort = Sort.by(
+                        "soldQuantity"
+                ).descending();
+
+                break;
+        }
+
+        return PageRequest.of(
+                page,
+                size,
+                sort
+        );
     }
 
     @Override

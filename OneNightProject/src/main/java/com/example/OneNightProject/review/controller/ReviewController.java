@@ -17,6 +17,9 @@ public class ReviewController {
     @Autowired
     private final ReviewService reviewService;
 
+    /**
+     * Viết review mới
+     */
     @PostMapping
     public ResponseEntity<?> create(
             @RequestHeader("Authorization")
@@ -33,6 +36,9 @@ public class ReviewController {
         );
     }
 
+    /**
+     * Sửa Review
+     */
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
             @RequestHeader("Authorization")
@@ -50,6 +56,9 @@ public class ReviewController {
         );
     }
 
+    /**
+     * Xóa review
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(
             @RequestHeader("Authorization")
@@ -64,6 +73,9 @@ public class ReviewController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Lấy danh sách review của sản phẩm
+     */
     @GetMapping("/product/{productId}")
     public ResponseEntity<?> getReviews(
             @PathVariable Long productId){
@@ -75,6 +87,9 @@ public class ReviewController {
         );
     }
 
+    /**
+     * Danh sách rating của sản phẩm
+     */
     @GetMapping("/product/{productId}/rating")
     public ResponseEntity<?> getRating(
             @PathVariable Long productId){
@@ -86,6 +101,9 @@ public class ReviewController {
         );
     }
 
+    /**
+     * Thống kê rating của sản phẩm
+     */
     @GetMapping("/product/{productId}/statistic")
     public ResponseEntity<?> statistic(
             @PathVariable Long productId){

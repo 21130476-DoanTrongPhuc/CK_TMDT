@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -41,6 +42,57 @@ public class PaymentServiceImpl {
     private final PaymentRepository paymentRepository;
     private final CartRepository cartRepository;
     private final PaymentCodeGenerator paymentCodeGenerator;
+
+    @Transactional
+    public PaymentResponse createPayment(
+            HttpServletRequest request,
+            PaymentRequest paymentRequest
+    ) {
+        Long orderId = Long.parseLong(request.getParameter("orderId"));
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                () -> new RuntimeException("Order not found"));
+
+        Payment checkPaymentExist = paymentRepository.findByOrder(order.getId());
+
+        if (checkPaymentExist == null) {
+
+            checkPaymentExist = Payment.builder()
+                    .order(order)
+                    .paymentCode(paymentCodeGenerator.generate())
+                    .method(paymentRequest.getPaymentMethod())
+                    .status(PaymentStatus.PENDING)
+                    .transactionId(null)
+                    .amount(BigDecimal.ZERO)
+                    .build();
+
+            order.setPaymentStatus(PaymentStatusOrder.UNPAID);
+
+            order.setStatus(OrderStatus.PENDING);
+
+            orderRepository.save(order);
+
+        } else {
+
+            checkPaymentExist.setMethod(paymentRequest.getPaymentMethod());
+
+        }
+
+        paymentRepository.save(checkPaymentExist);
+
+        PaymentResponse response = new PaymentResponse();
+
+        response.setOrderId(order.getId());
+
+        response.setPaymentMethod(checkPaymentExist.getMethod());
+
+        response.setPaymentStatus(checkPaymentExist.getStatus());
+
+        response.setTransactionId(checkPaymentExist.getTransactionId());
+
+        response.setAmount(checkPaymentExist.getAmount());
+
+        return response;
+    }
 
     @Transactional
     public PaymentDTO.VNPayResponse createVnPayPayment(
@@ -55,9 +107,7 @@ public class PaymentServiceImpl {
                 .orElseThrow(() ->
                         new RuntimeException("Order not found"));
 
-        Payment payment = paymentRepository.findByOrder(order)
-                .orElseThrow(() ->
-                        new RuntimeException("Payment not found"));
+        Payment payment = paymentRepository.findByOrder(order.getId());
 
         boolean isCustomized =
                 orderRepository.isOrderCustomized(orderId);
@@ -346,88 +396,7 @@ public class PaymentServiceImpl {
                         + responseCode
         );
     }
-    @Transactional
-    public PaymentResponse createPayment(
-            HttpServletRequest request,
-            PaymentRequest paymentRequest
-    ) {
-        Long orderId = Long.parseLong(
-                request.getParameter("orderId")
-        );
-        Order order = orderRepository.findById(
-                orderId
-        ).orElseThrow(
-                () -> new RuntimeException("Order not found")
-        );
 
-        Payment payment =
-                Payment.builder()
-                        .order(order)
-                        .method(paymentRequest.getPaymentMethod())
-                        .status(PaymentStatus.PENDING)
-                        .paymentCode(
-                                paymentCodeGenerator.generate()
-                        )
-                        .build();
-
-        paymentRepository.save(payment);
-
-        if (payment == null) {
-
-            payment = Payment.builder()
-                    .order(order)
-                    .method(paymentRequest.getPaymentMethod())
-                    .status(PaymentStatus.PENDING)
-                    .transactionId(null)
-                    .amount(BigDecimal.ZERO)
-                    .build();
-
-            order.setPaymentStatus(
-                    PaymentStatusOrder.UNPAID
-            );
-
-            order.setStatus(
-                    OrderStatus.PENDING
-            );
-
-            orderRepository.save(order);
-
-        }
-        else
-        {
-
-            payment.setMethod(
-                    paymentRequest.getPaymentMethod()
-            );
-        }
-
-        payment = paymentRepository.save(payment);
-
-        PaymentResponse response =
-                new PaymentResponse();
-
-        response.setOrderId(
-                order.getId()
-        );
-
-        response.setPaymentMethod(
-                payment.getMethod()
-        );
-
-        response.setPaymentStatus(
-                payment.getStatus()
-        );
-
-        response.setTransactionId(
-                payment.getTransactionId()
-        );
-
-        response.setAmount(
-                payment.getAmount()
-        );
-
-        return response;
-    }
     public PaymentResponse getPayment(
             PaymentRequest request
     ) {
@@ -439,10 +408,7 @@ public class PaymentServiceImpl {
         );
 
         Payment payment = paymentRepository
-                .findByOrder(order)
-                .orElseThrow(
-                        () -> new RuntimeException("Payment not found")
-                );
+                .findByOrder(order.getId());
 
         PaymentResponse response =
                 new PaymentResponse();
@@ -490,9 +456,7 @@ public class PaymentServiceImpl {
         }
 
         Payment payment = paymentRepository
-                .findByOrder(order)
-                .orElseThrow(() ->
-                        new RuntimeException("Payment not found"));
+                .findByOrder(order.getId());
 
         /*
          * Bắt buộc phương thức phải là COD
@@ -550,25 +514,22 @@ public class PaymentServiceImpl {
             cartRepository.save(cart);
         }
 
-        PaymentResponse response =
-                new PaymentResponse();
+        return getPaymentResponse(payment, order);
+    }
 
-        response.setOrderId(
-                order.getId()
-        );
+    private static PaymentResponse getPaymentResponse(Payment payment, Order order) {
+        PaymentResponse response = new PaymentResponse();
 
-        response.setPaymentMethod(
-                payment.getMethod()
-        );
-
-        response.setPaymentStatus(
-                payment.getStatus()
-        );
-
-        response.setAmount(
-                order.getTotalPrice()
-        );
-
+        response.setId(payment.getId());
+        response.setOrderId(order.getId());
+        response.setPaymentMethod(payment.getMethod());
+        response.setPaymentStatus(payment.getStatus());
+        response.setCustomized(false);
+        response.setTransactionId("I dont know");
+        response.setAmount(order.getTotalPrice());
+        response.setOrderStatus(order.getStatus());
+        response.setOrderPaymentStatus(order.getPaymentStatus());
+        response.setAmount(order.getTotalPrice());
         return response;
     }
 
@@ -584,11 +545,7 @@ public class PaymentServiceImpl {
                         ));
 
         Payment payment = paymentRepository
-                .findByOrder(order)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Payment not found"
-                        ));
+                .findByOrder(order.getId());
 
         /*
          * Chỉ áp dụng cho COD
