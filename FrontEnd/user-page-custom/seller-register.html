@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đăng ký Seller</title>
+<link rel="stylesheet" href="css/vendor.min.css">
+<link rel="stylesheet" href="css/theme.min.css">
+<style>
+body{background:#f5f5f5}
+.auth-card{max-width:700px;margin:auto}
+.step-box{display:flex;justify-content:space-between;margin-bottom:30px}
+.step{flex:1;text-align:center;position:relative}
+.step:after{content:'';height:2px;background:#ddd;position:absolute;top:18px;left:50%;width:100%}
+.step:last-child:after{display:none}
+.step-number{width:36px;height:36px;border-radius:50%;background:#fe696a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="container py-5">
+<div class="card border-0 box-shadow-lg auth-card">
+<div class="card-body p-5">
+<h2 class="mb-4">Đăng ký trở thành Seller</h2>
+
+<div class="step-box">
+<div class="step"><div class="step-number">1</div><p>Tài khoản</p></div>
+<div class="step"><div class="step-number">2</div><p>Cửa hàng</p></div>
+<div class="step"><div class="step-number">3</div><p>Xác minh</p></div>
+</div>
+
+<form>
+<div class="row">
+<div class="col-md-6 mb-3">
+<label>Họ và tên</label>
+<input type="text" class="form-control" placeholder="Nguyễn Văn A">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Email</label>
+<input type="email" class="form-control" placeholder="seller@gmail.com">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Số điện thoại</label>
+<input type="text" class="form-control">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Mật khẩu</label>
+<input type="password" class="form-control">
+</div>
+
+<div class="col-12 mb-3">
+<label>Tên cửa hàng</label>
+<input type="text" class="form-control">
+</div>
+
+<div class="col-12 mb-3">
+<label>Mô tả cửa hàng</label>
+<textarea class="form-control" rows="4"></textarea>
+</div>
+
+<div class="col-md-6 mb-3">
+<label>CMND/CCCD</label>
+<input type="file" class="form-control">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Logo cửa hàng</label>
+<input type="file" class="form-control">
+</div>
+
+<div class="col-12">
+<button class="btn btn-primary btn-shadow btn-block">
+Tạo tài khoản Seller
+</button>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+</body>
+</html>
