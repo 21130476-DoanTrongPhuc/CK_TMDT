@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Sensitive config (chứa DB password, API keys, JWT secret) ###
+src/main/resources/application.properties

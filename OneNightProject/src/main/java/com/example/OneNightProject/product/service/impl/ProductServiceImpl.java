@@ -4,6 +4,7 @@ import com.example.OneNightProject.product.dto.request.ProductFilterRequest;
 import com.example.OneNightProject.product.dto.request.ProductRequest;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
 import com.example.OneNightProject.product.entity.Product;
+import com.example.OneNightProject.product.enums.ProductStatus;
 import com.example.OneNightProject.product.mapper.ProductMapper;
 import com.example.OneNightProject.product.repository.ProductRepository;
 import com.example.OneNightProject.product.repository.ProductSpecification;
@@ -198,7 +199,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> getProductsBySeller(Long sellerId, Pageable pageable) {
-        return null;
+        return productRepository.findBySellerIdAndDeleteAtIsNull(sellerId, pageable)
+                .map(productMapper::toResponse);
     }
 
     // =========================

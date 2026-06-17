@@ -125,4 +125,13 @@ public class ProductController {
                 )
         );
     }
+
+    /**
+     * Xóa ảnh theo imageId
+     */
+    @DeleteMapping("/images/{imageId}")
+    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
+        productImageService.deleteImage(imageId);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 
 @Service
@@ -41,12 +42,26 @@ public class ProductImageServiceImpl implements ProductImageService {
             ProductImage image = ProductImage.builder()
                     .product(product)
                     .imageUrl(imageUrl)
+                    .publicId(publicId)
                     .build();
 
             return imageRepository.save(image);
         }catch (Exception e){
             throw new RuntimeException(e);
         }
+    }
+
+    // =========================
+    // Xóa 1 ảnh
+    // =========================
+    @Override
+    public void deleteImage(Long imageId) {
+        ProductImage image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new NoSuchElementException("Image not found: " + imageId));
+        if (image.getPublicId() != null) {
+            cloudinaryService.delete(image.getPublicId());
+        }
+        imageRepository.delete(image);
     }
 
     // =========================
