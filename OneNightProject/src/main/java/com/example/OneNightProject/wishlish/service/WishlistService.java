@@ -1,6 +1,7 @@
 package com.example.OneNightProject.wishlish.service;
 
 import com.example.OneNightProject.wishlish.dto.response.WishlistProductResponse;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -10,7 +11,11 @@ public interface WishlistService {
 
     void removeProduct(Long userId, Long productId);
 
-    List<WishlistProductResponse> getWishlist(Long userId);
+    Page<WishlistProductResponse> getWishlist(
+            Long userId,
+            int page,
+            int size
+    );
 
     boolean isFavorite(Long userId, Long productId);
 }

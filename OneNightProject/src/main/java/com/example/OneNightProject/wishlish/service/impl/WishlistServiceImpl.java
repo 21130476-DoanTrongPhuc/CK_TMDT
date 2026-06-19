@@ -12,6 +12,9 @@ import com.example.OneNightProject.wishlish.repository.WishlistRepository;
 import com.example.OneNightProject.wishlish.service.WishlistService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -86,22 +89,27 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     @Transactional
-    public List<WishlistProductResponse> getWishlist(Long userId) {
+    public Page<WishlistProductResponse> getWishlist(
+            Long userId,
+            int page,
+            int size
+    ) {
 
         Wishlist wishlist = wishlistRepository
                 .findByUserId(userId)
                 .orElseThrow(() ->
                         new RuntimeException("Wishlist not found"));
 
+        Pageable pageable = PageRequest.of(page, size);
+
         return wishlistItemRepository
-                .findAllByWishlistId(wishlist.getId())
-                .stream()
+                .findAllByWishlistId(wishlist.getId(), pageable)
                 .map(item -> {
 
                     Product product = item.getProduct();
 
-                    String image = product.getImages() != null &&
-                            !product.getImages().isEmpty()
+                    String image = product.getImages() != null
+                            && !product.getImages().isEmpty()
                             ? product.getImages().get(0).getImageUrl()
                             : null;
 
@@ -112,8 +120,7 @@ public class WishlistServiceImpl implements WishlistService {
                             .stock(product.getStock())
                             .imageUrl(image)
                             .build();
-                })
-                .toList();
+                });
     }
 
     @Override

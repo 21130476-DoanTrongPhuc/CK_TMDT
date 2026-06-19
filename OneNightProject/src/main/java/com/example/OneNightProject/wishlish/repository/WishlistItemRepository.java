@@ -1,6 +1,8 @@
 package com.example.OneNightProject.wishlish.repository;
 
 import com.example.OneNightProject.wishlish.entity.WishlistItem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +18,10 @@ public interface WishlistItemRepository
             Long productId
     );
 
-    List<WishlistItem> findAllByWishlistId(Long wishlistId);
+    Page<WishlistItem> findAllByWishlistId(
+            Long wishlistId,
+            Pageable pageable
+    );
 
     void deleteByWishlistIdAndProductId(
             Long wishlistId,

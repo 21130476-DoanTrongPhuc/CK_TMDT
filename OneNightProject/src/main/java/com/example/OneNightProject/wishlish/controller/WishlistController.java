@@ -6,6 +6,7 @@ import com.example.OneNightProject.user.repository.CustomerRepository;
 import com.example.OneNightProject.wishlish.dto.response.WishlistProductResponse;
 import com.example.OneNightProject.wishlish.service.WishlistService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,9 +54,12 @@ public class WishlistController {
     }
 
     @GetMapping
-    public ResponseEntity<List<WishlistProductResponse>> getWishlist(
-            @RequestHeader("Authorization") String authHeader
+    public ResponseEntity<Page<WishlistProductResponse>> getWishlist(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
     ) {
+
         String token = authHeader.substring(7);
 
         String email = jwtService.extractUsername(token);
@@ -63,7 +67,11 @@ public class WishlistController {
         Users users = userRepository.findByEmail(email);
 
         return ResponseEntity.ok(
-                wishlistService.getWishlist(users.getId())
+                wishlistService.getWishlist(
+                        users.getId(),
+                        page,
+                        size
+                )
         );
     }
 
