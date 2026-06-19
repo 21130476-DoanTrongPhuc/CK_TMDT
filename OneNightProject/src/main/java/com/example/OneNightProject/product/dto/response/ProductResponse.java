@@ -40,6 +40,8 @@ public class ProductResponse {
 
     private Long totalReviews;
 
+    private Boolean checkWishlist;
+
     private List<ProductImageResponse> images;
 
     private LocalDateTime createdAt;

@@ -48,31 +48,49 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse register(CustomerRequest request) {
 
-        if(customerRepository.existsByEmail(request.getEmail())) {
+        if(customerRepository.existsByEmail(request.getEmail()) &&
+                customerRepository.findByEmail(request.getEmail()).getStatus().equals(CustomerStatusEnum.ACTIVE)) {
             throw new RuntimeException(
                     "EMAIL_ALREADY_EXISTS"
             );
         }
 
-        String password = request.getPassword();
-        Users users = customerMapper.toEntityCustomerRequest(request);
-        users.setPassword(new BCryptPasswordEncoder().encode(password));
-        users.setStatus(CustomerStatusEnum.INACTIVE);
-        users.setRole(CustomerEnum.USER);
-        customerMapper.toCustomerResposne(customerRepository.save(users));
-
         String token = UUID.randomUUID().toString();
-
         VerificationToken verificationToken = new VerificationToken();
-        verificationToken.setToken(token);
-        verificationToken.setUser(users);
-        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
 
-        tokenRepository.save(verificationToken);
+        if(customerRepository.existsByEmail(request.getEmail()) &&
+                customerRepository.findByEmail(request.getEmail()).getStatus().equals(CustomerStatusEnum.INACTIVE)) {
+            Users user = customerRepository.findByEmail(request.getEmail());
 
-        sendVerificationEmail(users.getEmail(), token);
+            verificationToken.setToken(token);
+            verificationToken.setUser(user);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
 
-        return customerMapper.toCustomerResposne(customerRepository.save(users));
+            tokenRepository.deleteByUserId(user.getId());
+            tokenRepository.save(verificationToken);
+
+            sendVerificationEmail(user.getEmail(), token);
+
+            return customerMapper.toCustomerResposne(customerRepository.save(user));
+        }else{
+
+            String password = request.getPassword();
+            Users users = customerMapper.toEntityCustomerRequest(request);
+            users.setPassword(new BCryptPasswordEncoder().encode(password));
+            users.setStatus(CustomerStatusEnum.INACTIVE);
+            users.setRole(CustomerEnum.USER);
+            customerMapper.toCustomerResposne(customerRepository.save(users));
+
+            verificationToken.setToken(token);
+            verificationToken.setUser(users);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+
+            tokenRepository.save(verificationToken);
+
+            sendVerificationEmail(users.getEmail(), token);
+
+            return customerMapper.toCustomerResposne(customerRepository.save(users));
+        }
     }
 
     public void sendVerificationEmail(String toEmail, String token) {
@@ -90,8 +108,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         try {
 
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(message, true);
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
             helper.setTo("dphuc081003@gmail.com");
             helper.setSubject(subject);

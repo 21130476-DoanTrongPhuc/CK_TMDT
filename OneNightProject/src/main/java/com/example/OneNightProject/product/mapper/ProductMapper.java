@@ -11,6 +11,7 @@ import com.example.OneNightProject.review.enums.ReviewStatus;
 import com.example.OneNightProject.review.repository.ReviewRepository;
 import com.example.OneNightProject.user.entity.Users;
 import com.example.OneNightProject.user.repository.CustomerRepository;
+import com.example.OneNightProject.wishlish.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -49,6 +50,7 @@ public class ProductMapper {
         return product;
     }
     public ProductResponse toResponse(Product product){
+
         Double avgRating =
                 reviewRepository
                         .getAverageRating(product.getId());

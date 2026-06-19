@@ -21,7 +21,7 @@ async function register(event) {
     // Validate
     if (password !== confirmPassword) {
 
-        alert("Passwords do not match");
+        $('#passwordMismatchModal').modal('show');
 
         return;
     }
@@ -44,6 +44,8 @@ async function register(event) {
             }
         );
 
+        console.log(response.json());
+
         if(response.ok){
             $('#registerSuccessModal')
                 .modal('show');
@@ -63,12 +65,7 @@ async function register(event) {
             return;
         }
 
-        const data =
-            await response.json();
-
-        console.log("Register success:", data);
-
-        alert("Register successful!");
+        const data = await response.json();
 
         // Nếu backend trả JWT luôn
         if (data.accessToken) {
@@ -79,7 +76,7 @@ async function register(event) {
             );
 
             window.location.href =
-                "index.html";
+                "home-fashion-store-v1.html";
         }
 
     } catch (error) {

@@ -14,6 +14,7 @@ import com.example.OneNightProject.user.enums.CustomerStatusEnum;
 import com.example.OneNightProject.user.repository.CustomerRepository;
 import com.example.OneNightProject.user.repository.VerificationTokenRepository;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 @Service
@@ -77,16 +79,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public String verifyAccount(String token) {
+    public void verifyAccount(HttpServletResponse response, String token) throws IOException {
         VerificationToken verificationToken =
                 tokenRepository.findByToken(token);
 
         if (verificationToken == null) {
-            return "Token không hợp lệ";
+            return;
         }
 
         if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            return "Token đã hết hạn";
+            return;
         }
 
         Users user = verificationToken.getUser();
@@ -94,7 +96,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         customerRepository.save(user);
 
-        return "Xác nhận tài khoản thành công";
+        response.sendRedirect("/home-fashion-store-v1.html");
     }
 
     @Override
