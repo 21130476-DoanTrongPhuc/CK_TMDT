@@ -2,6 +2,8 @@ package com.example.OneNightProject.review.repository;
 
 import com.example.OneNightProject.review.entity.Review;
 import com.example.OneNightProject.review.enums.ReviewStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,12 +20,6 @@ public interface ReviewRepository
     Optional<Review> findByUserIdAndProductId(
             Long userId,
             Long productId);
-
-    List<Review> findByProductIdAndStatus(
-            Long productId,
-            ReviewStatus status);
-
-    List<Review> findByUserId(Long userId);
 
     long countByProductIdAndRating(
             Long productId,
@@ -48,4 +44,17 @@ public interface ReviewRepository
     long countNewBySellerId(@Param("sellerId") Long sellerId, @Param("since") LocalDateTime since);
 
     List<Review> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
+
+    Page<Review> findByProductIdAndStatusAndDeletedAtIsNull(
+            Long productId,
+            ReviewStatus status,
+            Pageable pageable
+    );
+
+    Page<Review> findByProductIdAndRatingAndStatusAndDeletedAtIsNull(
+            Long productId,
+            Integer rating,
+            ReviewStatus status,
+            Pageable pageable
+    );
 }

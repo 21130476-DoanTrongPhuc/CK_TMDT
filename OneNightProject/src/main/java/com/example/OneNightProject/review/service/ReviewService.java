@@ -5,6 +5,8 @@ import com.example.OneNightProject.review.dto.request.UpdateReviewRequest;
 import com.example.OneNightProject.review.dto.response.ProductRatingResponse;
 import com.example.OneNightProject.review.dto.response.RatingStatisticResponse;
 import com.example.OneNightProject.review.dto.response.ReviewResponse;
+import com.example.OneNightProject.review.enums.ReviewSortType;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -25,8 +27,13 @@ public interface ReviewService {
             String authHeader,
             Long reviewId);
 
-    List<ReviewResponse> getProductReviews(
-            Long productId);
+    Page<ReviewResponse> getProductReviews(
+            Long productId,
+            Integer page,
+            Integer size,
+            Integer rating,
+            ReviewSortType sortType
+    );
 
     ProductRatingResponse getProductRating(
             Long productId);

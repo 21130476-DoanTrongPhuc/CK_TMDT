@@ -1,8 +1,6 @@
-const ORDER_DETAIL_API =
-    "http://localhost:8081/api/v1/orders";
+const ORDER_DETAIL_API = "http://localhost:8081/api/v1/orders";
 
-const ORDER_API =
-    "http://localhost:8081/api/v1/orders/my-orders";
+const ORDER_API = "http://localhost:8081/api/v1/orders/my-orders";
 
 let currentPage = 0;
 let pageSize = 10;

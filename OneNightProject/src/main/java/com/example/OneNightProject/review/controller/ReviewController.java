@@ -2,12 +2,17 @@ package com.example.OneNightProject.review.controller;
 
 import com.example.OneNightProject.review.dto.request.CreateReviewRequest;
 import com.example.OneNightProject.review.dto.request.UpdateReviewRequest;
+import com.example.OneNightProject.review.dto.response.ReviewResponse;
+import com.example.OneNightProject.review.enums.ReviewSortType;
 import com.example.OneNightProject.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/reviews")
@@ -26,14 +31,36 @@ public class ReviewController {
             String authHeader,
             @RequestBody
             @Valid
-            CreateReviewRequest request){
+            CreateReviewRequest request) {
 
-        return ResponseEntity.ok(
-                reviewService.createReview(
-                        authHeader,
-                        request
-                )
-        );
+        try {
+
+            ReviewResponse response =
+                    reviewService.createReview(
+                            authHeader,
+                            request
+                    );
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException ex) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of(
+                            "success", false,
+                            "message", ex.getMessage()
+                    ));
+
+        } catch (Exception ex) {
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Internal server error"
+                    ));
+        }
     }
 
     /**
@@ -78,11 +105,27 @@ public class ReviewController {
      */
     @GetMapping("/product/{productId}")
     public ResponseEntity<?> getReviews(
-            @PathVariable Long productId){
+            @PathVariable Long productId,
+
+            @RequestParam(defaultValue = "0")
+            Integer page,
+
+            @RequestParam(defaultValue = "10")
+            Integer size,
+
+            @RequestParam(required = false)
+            Integer rating,
+
+            @RequestParam(defaultValue = "NEWEST")
+            ReviewSortType sortType) {
 
         return ResponseEntity.ok(
                 reviewService.getProductReviews(
-                        productId
+                        productId,
+                        page,
+                        size,
+                        rating,
+                        sortType
                 )
         );
     }
