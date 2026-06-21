@@ -1,0 +1,1 @@
+ALTER TABLE products ADD allow_customization TINYINT(0)

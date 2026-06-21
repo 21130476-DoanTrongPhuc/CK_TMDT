@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dynamic Custom Product</title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body{
+      background:#f4f4f4;
+      padding:30px;
+    }
+
+    .container{
+      max-width:1400px;
+      margin:auto;
+      display:grid;
+      grid-template-columns: 1fr 450px;
+      gap:30px;
+    }
+
+    .card{
+      background:white;
+      border-radius:16px;
+      padding:24px;
+      box-shadow:0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .product-image{
+      width:100%;
+      height:420px;
+      border-radius:14px;
+      overflow:hidden;
+      margin-bottom:20px;
+    }
+
+    .product-image img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+
+    .title{
+      font-size:32px;
+      font-weight:bold;
+      margin-bottom:10px;
+    }
+
+    .price{
+      color:#e53935;
+      font-size:30px;
+      font-weight:bold;
+      margin-bottom:20px;
+    }
+
+    .custom-group{
+      margin-top:25px;
+      border-top:1px solid #ddd;
+      padding-top:20px;
+    }
+
+    .custom-title{
+      font-size:20px;
+      margin-bottom:15px;
+      font-weight:bold;
+    }
+
+    .checkbox-option{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      margin-bottom:10px;
+    }
+
+    .select-box{
+      width:100%;
+      padding:14px;
+      border-radius:10px;
+      border:1px solid #ccc;
+      font-size:15px;
+    }
+
+    .summary{
+      margin-top:30px;
+      background:#fafafa;
+      padding:20px;
+      border-radius:12px;
+    }
+
+    .summary-item{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:12px;
+    }
+
+    .total{
+      margin-top:20px;
+      font-size:26px;
+      font-weight:bold;
+      color:#e53935;
+    }
+
+    /* SELLER PANEL */
+
+    .section-title{
+      font-size:24px;
+      margin-bottom:20px;
+    }
+
+    .form-group{
+      margin-bottom:16px;
+    }
+
+    .form-group label{
+      display:block;
+      margin-bottom:8px;
+      font-weight:bold;
+    }
+
+    input,
+    textarea,
+    select{
+      width:100%;
+      padding:12px;
+      border-radius:10px;
+      border:1px solid #ccc;
+    }
+
+    .option-builder{
+      margin-top:15px;
+      padding:15px;
+      background:#fafafa;
+      border-radius:10px;
+      border:1px solid #ddd;
+    }
+
+    .small-input{
+      display:grid;
+      grid-template-columns:1fr 120px auto;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .small-btn{
+      background:#6c63ff;
+      color:white;
+      border:none;
+      border-radius:8px;
+      padding:10px 14px;
+      cursor:pointer;
+    }
+
+    .create-btn{
+      width:100%;
+      background:#111827;
+      color:white;
+      border:none;
+      padding:14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:16px;
+      margin-top:10px;
+    }
+
+    .created-options{
+      margin-top:25px;
+    }
+
+    .created-card{
+      border:1px solid #ddd;
+      border-radius:10px;
+      padding:14px;
+      margin-bottom:14px;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:20px;
+      background:#ecebff;
+      color:#4338ca;
+      font-size:13px;
+      margin-top:8px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- USER PRODUCT VIEW -->
+  <div class="card">
+
+    <div class="product-image">
+      <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200&auto=format&fit=crop">
+    </div>
+
+    <div class="title">
+      Gấu Bông Handmade
+    </div>
+
+    <div class="price" id="basePrice">
+      250,000đ
+    </div>
+
+    <div id="userCustomContainer"></div>
+
+    <div class="summary">
+      <h3>Custom Summary</h3>
+
+      <div id="summaryList"></div>
+
+      <div class="total" id="totalPrice">
+        Tổng: 250,000đ
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SELLER PANEL -->
+  <div class="card">
+
+    <div class="section-title">
+      Seller Custom Builder
+    </div>
+
+    <div class="form-group">
+      <label>Tên nhóm custom</label>
+
+      <input
+        type="text"
+        id="groupName"
+        placeholder="VD: Trang trí thêm"
+      />
+    </div>
+
+    <div class="form-group">
+      <label>Loại option</label>
+
+      <select id="groupType">
+        <option value="checkbox">
+          Tick chọn nhiều
+        </option>
+
+        <option value="select">
+          Dropdown danh sách
+        </option>
+      </select>
+    </div>
+
+    <div class="option-builder">
+
+      <div class="small-input">
+
+        <input
+          type="text"
+          id="itemName"
+          placeholder="Tên option"
+        />
+
+        <input
+          type="number"
+          id="itemPrice"
+          placeholder="Giá"
+        />
+
+        <button class="small-btn"
+          onclick="addTempOption()">
+          Thêm
+        </button>
+
+      </div>
+
+      <div id="tempOptions"></div>
+
+    </div>
+
+    <button class="create-btn"
+      onclick="createGroup()">
+      Tạo Custom Group
+    </button>
+
+    <div class="created-options"
+      id="createdGroups">
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+  const BASE_PRICE = 250000;
+
+  let tempOptions = [];
+
+  let customGroups = [];
+
+  function formatPrice(price){
+    return price.toLocaleString("vi-VN") + "đ";
+  }
+
+  function addTempOption(){
+
+    const name =
+      document.getElementById("itemName").value;
+
+    const price =
+      document.getElementById("itemPrice").value;
+
+    if(!name || !price){
+      alert("Nhập đầy đủ");
+      return;
+    }
+
+    tempOptions.push({
+      name,
+      price:Number(price)
+    });
+
+    renderTempOptions();
+
+    document.getElementById("itemName").value = "";
+    document.getElementById("itemPrice").value = "";
+
+  }
+
+  function renderTempOptions(){
+
+    const container =
+      document.getElementById("tempOptions");
+
+    container.innerHTML = "";
+
+    tempOptions.forEach(option => {
+
+      container.innerHTML += `
+        <div class="badge">
+          ${option.name}
+          (+${formatPrice(option.price)})
+        </div>
+      `;
+
+    });
+
+  }
+
+  function createGroup(){
+
+    const groupName =
+      document.getElementById("groupName").value;
+
+    const groupType =
+      document.getElementById("groupType").value;
+
+    if(!groupName || tempOptions.length === 0){
+      alert("Thiếu dữ liệu");
+      return;
+    }
+
+    customGroups.push({
+      id:Date.now(),
+      name:groupName,
+      type:groupType,
+      options:[...tempOptions]
+    });
+
+    tempOptions = [];
+
+    renderTempOptions();
+
+    document.getElementById("groupName").value = "";
+
+    renderSellerGroups();
+
+    renderUserUI();
+
+  }
+
+  function renderSellerGroups(){
+
+    const container =
+      document.getElementById("createdGroups");
+
+    container.innerHTML = "";
+
+    customGroups.forEach(group => {
+
+      container.innerHTML += `
+        <div class="created-card">
+
+          <h4>${group.name}</h4>
+
+          <div class="badge">
+            ${group.type}
+          </div>
+
+          <div style="margin-top:10px">
+
+            ${group.options.map(opt => `
+              <div style="margin-bottom:6px">
+                • ${opt.name}
+                (+${formatPrice(opt.price)})
+              </div>
+            `).join("")}
+
+          </div>
+
+        </div>
+      `;
+
+    });
+
+  }
+
+  function renderUserUI(){
+
+    const container =
+      document.getElementById("userCustomContainer");
+
+    container.innerHTML = "";
+
+    customGroups.forEach((group,index) => {
+
+      let html = `
+        <div class="custom-group">
+
+          <div class="custom-title">
+            ${group.name}
+          </div>
+      `;
+
+      // CHECKBOX
+      if(group.type === "checkbox"){
+
+        group.options.forEach((opt,optIndex) => {
+
+          html += `
+            <div class="checkbox-option">
+
+              <label>
+
+                <input
+                  type="checkbox"
+                  data-group="${index}"
+                  data-option="${optIndex}"
+                  onchange="calculateTotal()"
+                />
+
+                ${opt.name}
+
+              </label>
+
+              <strong>
+                +${formatPrice(opt.price)}
+              </strong>
+
+            </div>
+          `;
+
+        });
+
+      }
+
+      // SELECT
+      else if(group.type === "select"){
+
+        html += `
+          <select
+            class="select-box"
+            data-group="${index}"
+            onchange="calculateTotal()"
+          >
+
+            <option value="">
+              -- Chọn option --
+            </option>
+        `;
+
+        group.options.forEach((opt,optIndex) => {
+
+          html += `
+            <option value="${optIndex}">
+              ${opt.name}
+              (+${formatPrice(opt.price)})
+            </option>
+          `;
+
+        });
+
+        html += `</select>`;
+
+      }
+
+      html += `</div>`;
+
+      container.innerHTML += html;
+
+    });
+
+  }
+
+  function calculateTotal(){
+
+    let total = BASE_PRICE;
+
+    const summary =
+      document.getElementById("summaryList");
+
+    summary.innerHTML = "";
+
+    // CHECKBOX
+    document.querySelectorAll(
+      'input[type="checkbox"]'
+    ).forEach(checkbox => {
+
+      if(checkbox.checked){
+
+        const groupIndex =
+          checkbox.dataset.group;
+
+        const optionIndex =
+          checkbox.dataset.option;
+
+        const option =
+          customGroups[groupIndex]
+          .options[optionIndex];
+
+        total += option.price;
+
+        summary.innerHTML += `
+          <div class="summary-item">
+            <span>${option.name}</span>
+            <strong>
+              +${formatPrice(option.price)}
+            </strong>
+          </div>
+        `;
+
+      }
+
+    });
+
+    // SELECT
+    document.querySelectorAll(
+      'select[data-group]'
+    ).forEach(select => {
+
+      if(select.value !== ""){
+
+        const groupIndex =
+          select.dataset.group;
+
+        const optionIndex =
+          select.value;
+
+        const option =
+          customGroups[groupIndex]
+          .options[optionIndex];
+
+        total += option.price;
+
+        summary.innerHTML += `
+          <div class="summary-item">
+            <span>${option.name}</span>
+            <strong>
+              +${formatPrice(option.price)}
+            </strong>
+          </div>
+        `;
+
+      }
+
+    });
+
+    document.getElementById(
+      "totalPrice"
+    ).innerText =
+      "Tổng: " + formatPrice(total);
+
+  }
+
+</script>
+
+</body>
+</html>
