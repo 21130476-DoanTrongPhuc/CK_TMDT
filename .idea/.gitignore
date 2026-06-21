@@ -6,4 +6,10 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-.idea/
+# IntelliJ
+/.idea/*.iml
+# Nếu dùng Maven
+/target/
+# Nếu dùng Node/React
+/node_modules/
+/dist/
