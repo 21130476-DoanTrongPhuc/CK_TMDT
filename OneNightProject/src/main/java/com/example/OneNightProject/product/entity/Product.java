@@ -89,6 +89,10 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+<<<<<<< HEAD
+=======
+    @UpdateTimestamp
+>>>>>>> 6e281d1956bbf1b50a1ec30263ae30f76e3efb9b
     @Column(name = "deleted_at")
     private LocalDateTime deleteAt;
 }

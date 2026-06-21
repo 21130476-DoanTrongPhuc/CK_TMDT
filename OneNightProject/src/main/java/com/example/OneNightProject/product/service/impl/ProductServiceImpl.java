@@ -24,330 +24,303 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class ProductServiceImpl implements ProductService {
-    @Autowired
-    private final ProductRepository productRepository;
-    @Autowired
-    private final ProductMapper productMapper;
-    @Autowired
-    private final ProductSpecification productSpecification;
+        @Autowired
+        private final ProductRepository productRepository;
+        @Autowired
+        private final ProductMapper productMapper;
+        @Autowired
+        private final ProductSpecification productSpecification;
 
-    // =========================
-    // CREATE PRODUCT
-    // =========================
-    @Override
-    public ProductResponse create(ProductRequest request) {
+        // =========================
+        // CREATE PRODUCT
+        // =========================
+        @Override
+        public ProductResponse create(ProductRequest request) {
 
-        Product product = productMapper.toEntity(request);
+                Product product = productMapper.toEntity(request);
 
-        return productMapper.toResponse(
-                productRepository.save(product)
-        );
-    }
-
-    // =========================
-    // UPDATE PRODUCT
-    // =========================
-    @Override
-    public ProductResponse update(Long id, ProductRequest request) {
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Product not found"));
-
-        productMapper.updateEntity(product, request);
-
-        return productMapper.toResponse(
-                productRepository.save(product)
-        );
-    }
-
-    // =========================
-    // SOFT DELETE PRODUCT
-    // =========================
-    @Override
-    public void delete(Long id) {
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Product not found"));
-
-        product.setDeleteAt(LocalDateTime.now());
-
-        productRepository.save(product);
-    }
-
-    // =========================
-    // GET ALL (PAGINATION)
-    // =========================
-    @Override
-    public Page<ProductResponse> findAll(Pageable pageable) {
-
-        return productRepository
-                .findAll(pageable)
-                .map(productMapper::toResponse);
-    }
-
-    // =========================
-    // GET BY ID
-    // =========================
-    @Override
-    public ProductResponse getById(Long id) {
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Product not found"));
-
-        return productMapper.toResponse(product);
-    }
-
-    // =========================
-    // FILTER (SPECIFICATION)
-    // =========================
-    @Override
-    public Page<ProductResponse> filterProducts(
-            ProductFilterRequest request,
-            Pageable pageable) {
-
-        Specification<Product> spec =
-                ProductSpecification.filter(request);
-
-        Pageable sortedPageable =
-                buildPageable(
-                        pageable.getPageNumber(),
-                        pageable.getPageSize(),
-                        request.getSortBy()
-                );
-
-        return productRepository
-                .findAll(spec, sortedPageable)
-                .map(productMapper::toResponse);
-    }
-
-    private Pageable buildPageable(
-            int page,
-            int size,
-            String sortBy
-    ) {
-
-        Sort sort = Sort.unsorted();
-
-        if(sortBy == null) {
-
-            return PageRequest.of(
-                    page,
-                    size
-            );
+                return productMapper.toResponse(
+                                productRepository.save(product));
         }
 
-        switch (sortBy) {
+        // =========================
+        // UPDATE PRODUCT
+        // =========================
+        @Override
+        public ProductResponse update(Long id, ProductRequest request) {
 
-            case "price_asc":
+                Product product = productRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Product not found"));
 
-                sort = Sort.by(
-                        "price"
-                ).ascending();
+                productMapper.updateEntity(product, request);
 
-                break;
-
-            case "price_desc":
-
-                sort = Sort.by(
-                        "price"
-                ).descending();
-
-                break;
-
-            case "name_asc":
-
-                sort = Sort.by(
-                        "name"
-                ).ascending();
-
-                break;
-
-            case "name_desc":
-
-                sort = Sort.by(
-                        "name"
-                ).descending();
-
-                break;
-
-            case "rating":
-
-                sort = Sort.by(
-                        "averageRating"
-                ).descending();
-
-                break;
-
-            case "popularity":
-
-                sort = Sort.by(
-                        "soldQuantity"
-                ).descending();
-
-                break;
+                return productMapper.toResponse(
+                                productRepository.save(product));
         }
 
-        return PageRequest.of(
-                page,
-                size,
-                sort
-        );
-    }
+        // =========================
+        // SOFT DELETE PRODUCT
+        // =========================
+        @Override
+        public void delete(Long id) {
 
-    @Override
-    public Page<ProductResponse> getProductsBySeller(Long sellerId, Pageable pageable) {
-        return productRepository.findBySellerIdAndDeleteAtIsNull(sellerId, pageable)
-                .map(productMapper::toResponse);
-    }
+                Product product = productRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Product not found"));
 
-    // =========================
-    // SEARCH PRODUCT
-    // =========================
-    public Page<ProductResponse> searchProducts(
-            String keyword,
-            Pageable pageable) {
+                product.setDeleteAt(LocalDateTime.now());
 
-        Specification<Product> spec = (root, query, cb) -> {
+                productRepository.save(product);
+        }
 
-            if (keyword == null || keyword.isBlank()) {
-                return cb.conjunction();
-            }
+        // =========================
+        // GET ALL (PAGINATION)
+        // =========================
+        @Override
+        public Page<ProductResponse> findAll(Pageable pageable) {
 
-            return cb.like(
-                    cb.lower(root.get("name")),
-                    "%" + keyword.toLowerCase() + "%"
-            );
-        };
+                return productRepository
+                                .findAll(pageable)
+                                .map(productMapper::toResponse);
+        }
 
-        return productRepository
-                .findAll(spec, pageable)
-                .map(productMapper::toResponse);
-    }
+        // =========================
+        // GET BY ID
+        // =========================
+        @Override
+        public ProductResponse getById(Long id) {
 
-    @Override
-    public List<ProductResponse> bestSellingProducts() {
-        return null;
-    }
+                Product product = productRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Product not found"));
 
+                return productMapper.toResponse(product);
+        }
 
-    // =========================
-    // BY CATEGORY
-    // =========================
-    public Page<ProductResponse> getByCategory(
-            Long categoryId,
-            Pageable pageable) {
+        // =========================
+        // FILTER (SPECIFICATION)
+        // =========================
+        @Override
+        public Page<ProductResponse> filterProducts(
+                        ProductFilterRequest request,
+                        Pageable pageable) {
 
-        Specification<Product> spec = (root, query, cb) ->
-                cb.equal(root.get("category").get("id"), categoryId);
+                Specification<Product> spec = ProductSpecification.filter(request);
 
-        return productRepository
-                .findAll(spec, pageable)
-                .map(productMapper::toResponse);
-    }
+                Pageable sortedPageable = buildPageable(
+                                pageable.getPageNumber(),
+                                pageable.getPageSize(),
+                                request.getSortBy());
 
-    // =========================
-    // BY BRAND
-    // =========================
-    public Page<ProductResponse> getByBrand(
-            Long brandId,
-            Pageable pageable) {
+                return productRepository
+                                .findAll(spec, sortedPageable)
+                                .map(productMapper::toResponse);
+        }
 
-        Specification<Product> spec = (root, query, cb) ->
-                cb.equal(root.get("brand").get("id"), brandId);
+        private Pageable buildPageable(
+                        int page,
+                        int size,
+                        String sortBy) {
 
-        return productRepository
-                .findAll(spec, pageable)
-                .map(productMapper::toResponse);
-    }
+                Sort sort = Sort.unsorted();
 
-    // =========================
-    // BY SELLER
-    // =========================
-    public Page<ProductResponse> getBySeller(
-            Long sellerId,
-            Pageable pageable) {
+                if (sortBy == null) {
 
-        Specification<Product> spec = (root, query, cb) ->
-                cb.equal(root.get("seller").get("id"), sellerId);
+                        return PageRequest.of(
+                                        page,
+                                        size);
+                }
 
-        return productRepository
-                .findAll(spec, pageable)
-                .map(productMapper::toResponse);
-    }
+                switch (sortBy) {
 
-    // =========================
-    // NEWEST PRODUCTS
-    // =========================
-    public List<ProductResponse> getNewestProducts() {
+                        case "price_asc":
 
-        Pageable pageable = PageRequest.of(
-                0,
-                10,
-                Sort.by("createdAt").descending()
-        );
+                                sort = Sort.by(
+                                                "price").ascending();
 
-        return productRepository
-                .findAll(pageable)
-                .map(productMapper::toResponse)
-                .getContent();
-    }
+                                break;
 
-    // =========================
-    // BEST SELLER (placeholder logic)
-    // =========================
-    public List<ProductResponse> getBestSellers() {
+                        case "price_desc":
 
-        // NOTE: cần order_items để tính thật
-        Pageable pageable = PageRequest.of(
-                0,
-                10
-        );
+                                sort = Sort.by(
+                                                "price").descending();
 
-        return productRepository
-                .findAll(pageable)
-                .map(productMapper::toResponse)
-                .getContent();
-    }
+                                break;
 
-    // =========================
-    // MOST VIEWED (placeholder logic)
-    // =========================
-    public List<ProductResponse> getMostViewed() {
+                        case "name_asc":
 
-        Pageable pageable = PageRequest.of(
-                0,
-                10
-        );
+                                sort = Sort.by(
+                                                "name").ascending();
 
-        return productRepository
-                .findAll(pageable)
-                .map(productMapper::toResponse)
-                .getContent();
-    }
+                                break;
 
-    // =========================
-    // RELATED PRODUCTS
-    // =========================
-    public List<ProductResponse> getRelatedProducts(Long productId) {
+                        case "name_desc":
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() ->
-                        new RuntimeException("Product not found"));
+                                sort = Sort.by(
+                                                "name").descending();
 
-        Specification<Product> spec = (root, query, cb) -> cb.and(
-                cb.equal(root.get("category").get("id"),
-                        product.getCategory().getId()),
-                cb.notEqual(root.get("id"), productId)
-        );
+                                break;
 
-        Pageable pageable = PageRequest.of(0, 8);
+                        case "rating":
 
-        return productRepository
-                .findAll(spec, pageable)
-                .map(productMapper::toResponse)
-                .getContent();
-    }
+                                sort = Sort.by(
+                                                "averageRating").descending();
+
+                                break;
+
+                        case "popularity":
+
+                                sort = Sort.by(
+                                                "soldQuantity").descending();
+
+                                break;
+                }
+
+                return PageRequest.of(
+                                page,
+                                size,
+                                sort);
+        }
+
+        @Override
+        public Page<ProductResponse> getProductsBySeller(Long sellerId, Pageable pageable) {
+                return productRepository.findBySellerIdAndDeleteAtIsNull(sellerId, pageable)
+                                .map(productMapper::toResponse);
+        }
+
+        // =========================
+        // SEARCH PRODUCT
+        // =========================
+        public Page<ProductResponse> searchProducts(
+                        String keyword,
+                        Pageable pageable) {
+
+                Specification<Product> spec = (root, query, cb) -> {
+
+                        if (keyword == null || keyword.isBlank()) {
+                                return cb.conjunction();
+                        }
+
+                        return cb.like(
+                                        cb.lower(root.get("name")),
+                                        "%" + keyword.toLowerCase() + "%");
+                };
+
+                return productRepository
+                                .findAll(spec, pageable)
+                                .map(productMapper::toResponse);
+        }
+
+        @Override
+        public List<ProductResponse> bestSellingProducts() {
+                return null;
+        }
+
+        // =========================
+        // BY CATEGORY
+        // =========================
+        public Page<ProductResponse> getByCategory(
+                        Long categoryId,
+                        Pageable pageable) {
+
+                Specification<Product> spec = (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
+
+                return productRepository
+                                .findAll(spec, pageable)
+                                .map(productMapper::toResponse);
+        }
+
+        // =========================
+        // BY BRAND
+        // =========================
+        public Page<ProductResponse> getByBrand(
+                        Long brandId,
+                        Pageable pageable) {
+
+                Specification<Product> spec = (root, query, cb) -> cb.equal(root.get("brand").get("id"), brandId);
+
+                return productRepository
+                                .findAll(spec, pageable)
+                                .map(productMapper::toResponse);
+        }
+
+        // =========================
+        // BY SELLER
+        // =========================
+        public Page<ProductResponse> getBySeller(
+                        Long sellerId,
+                        Pageable pageable) {
+
+                Specification<Product> spec = (root, query, cb) -> cb.equal(root.get("seller").get("id"), sellerId);
+
+                return productRepository
+                                .findAll(spec, pageable)
+                                .map(productMapper::toResponse);
+        }
+
+        // =========================
+        // NEWEST PRODUCTS
+        // =========================
+        public List<ProductResponse> getNewestProducts() {
+
+                Pageable pageable = PageRequest.of(
+                                0,
+                                10,
+                                Sort.by("createdAt").descending());
+
+                return productRepository
+                                .findAll(pageable)
+                                .map(productMapper::toResponse)
+                                .getContent();
+        }
+
+        // =========================
+        // BEST SELLER (placeholder logic)
+        // =========================
+        public List<ProductResponse> getBestSellers() {
+
+                // NOTE: cần order_items để tính thật
+                Pageable pageable = PageRequest.of(
+                                0,
+                                10);
+
+                return productRepository
+                                .findAll(pageable)
+                                .map(productMapper::toResponse)
+                                .getContent();
+        }
+
+        // =========================
+        // MOST VIEWED (placeholder logic)
+        // =========================
+        public List<ProductResponse> getMostViewed() {
+
+                Pageable pageable = PageRequest.of(
+                                0,
+                                10);
+
+                return productRepository
+                                .findAll(pageable)
+                                .map(productMapper::toResponse)
+                                .getContent();
+        }
+
+        // =========================
+        // RELATED PRODUCTS
+        // =========================
+        public List<ProductResponse> getRelatedProducts(Long productId) {
+
+                Product product = productRepository.findById(productId)
+                                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+                Specification<Product> spec = (root, query, cb) -> cb.and(
+                                cb.equal(root.get("category").get("id"),
+                                                product.getCategory().getId()),
+                                cb.notEqual(root.get("id"), productId));
+
+                Pageable pageable = PageRequest.of(0, 8);
+
+                return productRepository
+                                .findAll(spec, pageable)
+                                .map(productMapper::toResponse)
+                                .getContent();
+        }
 }

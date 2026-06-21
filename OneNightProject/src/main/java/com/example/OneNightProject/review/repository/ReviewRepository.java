@@ -13,39 +13,39 @@ import java.util.Optional;
 
 @Repository
 public interface ReviewRepository
-        extends JpaRepository<Review, Long> {
+                extends JpaRepository<Review, Long> {
 
-    Optional<Review> findByUserIdAndProductId(
-            Long userId,
-            Long productId);
+        Optional<Review> findByUserIdAndProductId(
+                        Long userId,
+                        Long productId);
 
-    List<Review> findByProductIdAndStatus(
-            Long productId,
-            ReviewStatus status);
+        List<Review> findByProductIdAndStatus(
+                        Long productId,
+                        ReviewStatus status);
 
-    List<Review> findByUserId(Long userId);
+        List<Review> findByUserId(Long userId);
 
-    long countByProductIdAndRating(
-            Long productId,
-            Integer rating);
+        long countByProductIdAndRating(
+                        Long productId,
+                        Integer rating);
 
-    @Query("""
-            SELECT AVG(r.rating)
-            FROM Review r
-            WHERE r.product.id = :productId
-            AND r.status = 'VISIBLE'
-            """)
-    Double getAverageRating(Long productId);
+        @Query("""
+                        SELECT AVG(r.rating)
+                        FROM Review r
+                        WHERE r.product.id = :productId
+                        AND r.status = 'VISIBLE'
+                        """)
+        Double getAverageRating(Long productId);
 
-    long countByProductIdAndStatus(
-            Long productId,
-            ReviewStatus status);
+        long countByProductIdAndStatus(
+                        Long productId,
+                        ReviewStatus status);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.product.seller.id = :sellerId")
-    long countBySellerId(@Param("sellerId") Long sellerId);
+        @Query("SELECT COUNT(r) FROM Review r WHERE r.product.seller.id = :sellerId")
+        long countBySellerId(@Param("sellerId") Long sellerId);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.product.seller.id = :sellerId AND r.createdAt >= :since")
-    long countNewBySellerId(@Param("sellerId") Long sellerId, @Param("since") LocalDateTime since);
+        @Query("SELECT COUNT(r) FROM Review r WHERE r.product.seller.id = :sellerId AND r.createdAt >= :since")
+        long countNewBySellerId(@Param("sellerId") Long sellerId, @Param("since") LocalDateTime since);
 
-    List<Review> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
+        List<Review> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
 }

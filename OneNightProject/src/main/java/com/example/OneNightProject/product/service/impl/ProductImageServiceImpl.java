@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-
 @Service
 @RequiredArgsConstructor
 public class ProductImageServiceImpl implements ProductImageService {
@@ -29,7 +28,7 @@ public class ProductImageServiceImpl implements ProductImageService {
     // =========================
     @Override
     public ProductImage uploadImage(Long productId, MultipartFile file) {
-        try{
+        try {
             validateFile(file);
 
             Product product = getProduct(productId);
@@ -46,7 +45,7 @@ public class ProductImageServiceImpl implements ProductImageService {
                     .build();
 
             return imageRepository.save(image);
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

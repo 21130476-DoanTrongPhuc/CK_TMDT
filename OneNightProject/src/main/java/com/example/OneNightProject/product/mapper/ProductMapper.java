@@ -22,138 +22,128 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductMapper {
 
-    @Autowired
-    private final ReviewRepository reviewRepository;
-    @Autowired
-    private final CustomerRepository userRepository;
-    @Autowired
-    private final CategoryRepository categoryRepository;
+        @Autowired
+        private final ReviewRepository reviewRepository;
+        @Autowired
+        private final CustomerRepository userRepository;
+        @Autowired
+        private final CategoryRepository categoryRepository;
 
-    public Product toEntity(ProductRequest request){
-        Product product = new Product();
-        Users users = userRepository.findById(request.getSellerId()).orElseThrow();
+        public Product toEntity(ProductRequest request) {
+                Product product = new Product();
+                Users users = userRepository.findById(request.getSellerId()).orElseThrow();
 
-        product.setName(request.getName());
-        product.setDescription(request.getDescription());
-        product.setPrice(request.getPrice());
-        product.setStock(request.getStock());
-        product.setStatus(request.getStatus());
-        product.setAllowCustomization(request.getAllowCustomization());
-        product.setSeller(users);
+                product.setName(request.getName());
+                product.setDescription(request.getDescription());
+                product.setPrice(request.getPrice());
+                product.setStock(request.getStock());
+                product.setStatus(request.getStatus());
+                product.setAllowCustomization(request.getAllowCustomization());
+                product.setSeller(users);
 
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
-            product.setCategory(category);
+                if (request.getCategoryId() != null) {
+                        Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+                        product.setCategory(category);
+                }
+
+                return product;
         }
 
-        return product;
-    }
-    public ProductResponse toResponse(Product product){
-        Double avgRating =
-                reviewRepository
-                        .getAverageRating(product.getId());
+        public ProductResponse toResponse(Product product) {
+                Double avgRating = reviewRepository
+                                .getAverageRating(product.getId());
 
-        Long totalReviews =
-                reviewRepository
-                        .countByProductIdAndStatus(
-                                product.getId(),
-                                ReviewStatus.VISIBLE
-                        );
+                Long totalReviews = reviewRepository
+                                .countByProductIdAndStatus(
+                                                product.getId(),
+                                                ReviewStatus.VISIBLE);
 
-        List<ProductImageResponse> images =
-                product.getImages() == null
-                        ? Collections.emptyList()
-                        : product.getImages()
-                        .stream()
-                        .map(this::toImageResponse)
-                        .toList();
+                List<ProductImageResponse> images = product.getImages() == null
+                                ? Collections.emptyList()
+                                : product.getImages()
+                                                .stream()
+                                                .map(this::toImageResponse)
+                                                .toList();
 
-        return ProductResponse.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .stock(product.getStock())
-                .status(product.getStatus())
+                return ProductResponse.builder()
+                                .id(product.getId())
+                                .name(product.getName())
+                                .description(product.getDescription())
+                                .price(product.getPrice())
+                                .stock(product.getStock())
+                                .status(product.getStatus())
 
-                .allowCustomization(
-                        product.getAllowCustomization())
+                                .allowCustomization(
+                                                product.getAllowCustomization())
 
-                .categoryId(
-                        product.getCategory() != null
-                                ? product.getCategory().getId()
-                                : null
-                )
+                                .categoryId(
+                                                product.getCategory() != null
+                                                                ? product.getCategory().getId()
+                                                                : null)
 
-                .categoryName(
-                        product.getCategory() != null
-                                ? product.getCategory().getName()
-                                : null
-                )
+                                .categoryName(
+                                                product.getCategory() != null
+                                                                ? product.getCategory().getName()
+                                                                : null)
 
-                .sellerId(
-                        product.getSeller().getId()
-                )
+                                .sellerId(
+                                                product.getSeller().getId())
 
-                .sellerName(
-                        product.getSeller().getFullName()
-                )
+                                .sellerName(
+                                                product.getSeller().getFullName())
 
-                .averageRating(
-                        avgRating == null ? 0.0 : avgRating
-                )
+                                .averageRating(
+                                                avgRating == null ? 0.0 : avgRating)
 
-                .totalReviews(totalReviews)
+                                .totalReviews(totalReviews)
 
-                .images(images)
+                                .images(images)
 
-                .createdAt(product.getCreatedAt())
+                                .createdAt(product.getCreatedAt())
 
-                .build();
-    }
-
-    private ProductImageResponse toImageResponse(
-            ProductImage image){
-
-        return new ProductImageResponse(
-                image.getId(),
-                image.getImageUrl()
-        );
-    }
-
-    public void updateEntity(
-            Product product,
-            ProductRequest request
-    ) {
-
-        if(request.getName() != null){
-            product.setName(request.getName());
+                                .build();
         }
 
-        if(request.getDescription() != null){
-            product.setDescription(request.getDescription());
+        private ProductImageResponse toImageResponse(
+                        ProductImage image) {
+
+                return new ProductImageResponse(
+                                image.getId(),
+                                image.getImageUrl());
         }
 
-        if(request.getPrice() != null){
-            product.setPrice(request.getPrice());
-        }
+        public void updateEntity(
+                        Product product,
+                        ProductRequest request) {
 
-        if(request.getStock() != null){
-            product.setStock(request.getStock());
-        }
+                if (request.getName() != null) {
+                        product.setName(request.getName());
+                }
 
-        if(request.getStatus() != null){
-            product.setStatus(request.getStatus());
-        }
+                if (request.getDescription() != null) {
+                        product.setDescription(request.getDescription());
+                }
 
-        if(request.getAllowCustomization() != null){
-            product.setAllowCustomization(
-                    request.getAllowCustomization());
-        }
+                if (request.getPrice() != null) {
+                        product.setPrice(request.getPrice());
+                }
 
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
-            product.setCategory(category);
+                if (request.getStock() != null) {
+                        product.setStock(request.getStock());
+                }
+
+                if (request.getStatus() != null) {
+                        product.setStatus(request.getStatus());
+                }
+
+                if (request.getAllowCustomization() != null) {
+                        product.setAllowCustomization(
+                                        request.getAllowCustomization());
+                }
+
+                if (request.getCategoryId() != null) {
+                        Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+                        product.setCategory(category);
+                }
         }
-    }
 }

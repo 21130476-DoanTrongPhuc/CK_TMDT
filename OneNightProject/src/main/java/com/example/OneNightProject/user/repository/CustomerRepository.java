@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface CustomerRepository extends JpaRepository<Users, Long> {
     boolean existsByEmail(String email);
+
     Users findByEmail(String email);
 
     long countByRole(CustomerEnum role);
