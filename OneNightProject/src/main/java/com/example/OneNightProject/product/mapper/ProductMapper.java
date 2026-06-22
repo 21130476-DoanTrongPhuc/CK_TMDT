@@ -3,9 +3,11 @@ package com.example.OneNightProject.product.mapper;
 import com.example.OneNightProject.product.dto.request.ProductRequest;
 import com.example.OneNightProject.product.dto.response.ProductImageResponse;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
+import com.example.OneNightProject.product.entity.Brand;
 import com.example.OneNightProject.product.entity.Category;
 import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.product.entity.ProductImage;
+import com.example.OneNightProject.product.repository.BrandRepository;
 import com.example.OneNightProject.product.repository.CategoryRepository;
 import com.example.OneNightProject.review.enums.ReviewStatus;
 import com.example.OneNightProject.review.repository.ReviewRepository;
@@ -28,6 +30,8 @@ public class ProductMapper {
     private final CustomerRepository userRepository;
     @Autowired
     private final CategoryRepository categoryRepository;
+    @Autowired
+    private final BrandRepository brandRepository;
 
     public Product toEntity(ProductRequest request){
         Product product = new Product();
@@ -38,12 +42,17 @@ public class ProductMapper {
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setStatus(request.getStatus());
-        product.setAllowCustomization(request.getAllowCustomization());
         product.setSeller(users);
+        product.setAllowCustomization(request.getAllowCustomization());
 
         if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+            Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow();
             product.setCategory(category);
+        }
+
+        if (request.getBrandId() != null) {
+            Brand brand = brandRepository.findById(request.getBrandId()).orElseThrow();
+            product.setBrand(brand);
         }
 
         return product;
@@ -88,6 +97,18 @@ public class ProductMapper {
                 .categoryName(
                         product.getCategory() != null
                                 ? product.getCategory().getName()
+                                : null
+                )
+
+                .brandId(
+                        product.getBrand() != null
+                                ? product.getBrand().getId()
+                                : null
+                )
+
+                .brandName(
+                        product.getBrand() != null
+                                ? product.getBrand().getName()
                                 : null
                 )
 
@@ -146,14 +167,21 @@ public class ProductMapper {
             product.setStatus(request.getStatus());
         }
 
+        if(request.getCategoryId() != null){
+            product.setCategory(
+                    categoryRepository.findById(request.getCategoryId()).orElseThrow()
+            );
+        }
+
+        if(request.getBrandId() != null){
+            product.setBrand(
+                    brandRepository.findById(request.getBrandId()).orElseThrow()
+            );
+        }
+
         if(request.getAllowCustomization() != null){
             product.setAllowCustomization(
                     request.getAllowCustomization());
-        }
-
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
-            product.setCategory(category);
         }
     }
 }

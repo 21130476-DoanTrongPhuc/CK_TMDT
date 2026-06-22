@@ -17,6 +17,12 @@ public interface OrderService {
             Pageable pageable
     );
 
+    Page<OrderListResponse> getSellerOrders(
+            String authHeader,
+            OrderFilterRequest request,
+            Pageable pageable
+    );
+
     OrderDetailResponse getOrderDetail(
             String authHeader,
             Long orderId

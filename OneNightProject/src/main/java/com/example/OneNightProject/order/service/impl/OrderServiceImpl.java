@@ -248,6 +248,55 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
+    public Page<OrderListResponse> getSellerOrders(
+            String authHeader,
+            OrderFilterRequest request,
+            Pageable pageable
+    ) {
+
+        String token = authHeader.substring(7);
+
+        Users seller = customerRepository.findByEmail(
+                jwtService.extractUsername(token)
+        );
+
+        Specification<Order> spec = (root, query, cb) -> {
+            query.distinct(true);
+
+            var orderItems = root.join("orderItems");
+            var product = orderItems.join("productId");
+
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(product.get("seller").get("id"), seller.getId()));
+
+            if (request != null) {
+                if (request.getOrderCode() != null) {
+                    predicates.add(cb.like(root.get("orderCode"), "%" + request.getOrderCode() + "%"));
+                }
+                if (request.getStatus() != null) {
+                    predicates.add(cb.equal(root.get("status"), request.getStatus()));
+                }
+                if (request.getPaymentStatus() != null) {
+                    predicates.add(cb.equal(root.get("paymentStatus"), request.getPaymentStatus()));
+                }
+                if (request.getFromDate() != null) {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), request.getFromDate()));
+                }
+                if (request.getToDate() != null) {
+                    predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), request.getToDate()));
+                }
+            }
+
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        return orderRepository
+                .findAll(spec, pageable)
+                .map(orderMapper::toListResponse);
+    }
+
+    @Override
+    @Transactional
     public OrderDetailResponse getOrderDetail(
             String authHeader,
             Long orderId

@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerProducts from './pages/seller/SellerProducts';
 import SellerOrders from './pages/seller/SellerOrders';
+import SellerPromotions from './pages/seller/SellerPromotions';
 import AdminReviews from './pages/admin/AdminReviews';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="seller/dashboard" element={<SellerDashboard />} />
         <Route path="seller/products" element={<SellerProducts />} />
         <Route path="seller/orders" element={<SellerOrders />} />
+        <Route path="seller/promotions" element={<SellerPromotions />} />
         <Route path="admin/reviews" element={<AdminReviews />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

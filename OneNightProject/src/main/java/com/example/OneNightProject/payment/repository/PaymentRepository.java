@@ -26,4 +26,14 @@ public interface PaymentRepository
 
     Optional<Payment> findByPaymentCode(String paymentCode);
 
+    @Query("""
+        SELECT DISTINCT p FROM Payment p
+        JOIN p.order o
+        JOIN o.orderItems oi
+        JOIN oi.productId product
+        WHERE product.seller.id = :sellerId
+        ORDER BY p.createdAt DESC
+    """)
+    List<Payment> findSellerPayments(Long sellerId);
+
 }

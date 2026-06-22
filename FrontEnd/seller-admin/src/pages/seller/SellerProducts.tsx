@@ -73,7 +73,7 @@ export default function SellerProducts() {
     setLoading(true);
     try {
       const res = await productApi.list();
-      setAllProducts(res.content);
+      setAllProducts(res);
     } catch {
       showToast('Không thể tải danh sách sản phẩm', 'error');
     } finally {
@@ -178,23 +178,28 @@ export default function SellerProducts() {
 
     setSaving(true);
     try {
+      let productId = editingId;
+
       if (editingId !== null) {
         await productApi.update(editingId, form);
-        if (pendingFiles.length > 0) {
-          setUploadingImg(true);
-          await uploadPendingFiles(editingId);
-          setUploadingImg(false);
-        }
         showToast('Cập nhật sản phẩm thành công', 'success');
       } else {
         const created = await productApi.create(form);
-        if (pendingFiles.length > 0) {
-          setUploadingImg(true);
-          await uploadPendingFiles(created.id);
-          setUploadingImg(false);
-        }
+        productId = created.id;
         showToast('Thêm sản phẩm thành công', 'success');
       }
+
+      if (productId !== null && pendingFiles.length > 0) {
+        setUploadingImg(true);
+        try {
+          await uploadPendingFiles(productId);
+        } catch {
+          showToast('Sản phẩm đã lưu nhưng upload ảnh thất bại', 'error');
+        } finally {
+          setUploadingImg(false);
+        }
+      }
+
       closeModal();
       fetchProducts();
     } catch {

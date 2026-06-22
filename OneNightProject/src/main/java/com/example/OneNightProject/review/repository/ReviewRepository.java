@@ -4,10 +4,8 @@ import com.example.OneNightProject.review.entity.Review;
 import com.example.OneNightProject.review.enums.ReviewStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,12 +38,4 @@ public interface ReviewRepository
     long countByProductIdAndStatus(
             Long productId,
             ReviewStatus status);
-
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.product.seller.id = :sellerId")
-    long countBySellerId(@Param("sellerId") Long sellerId);
-
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.product.seller.id = :sellerId AND r.createdAt >= :since")
-    long countNewBySellerId(@Param("sellerId") Long sellerId, @Param("since") LocalDateTime since);
-
-    List<Review> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
 }

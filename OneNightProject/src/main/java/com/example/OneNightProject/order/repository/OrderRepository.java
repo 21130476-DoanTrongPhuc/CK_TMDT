@@ -7,7 +7,6 @@ import com.example.OneNightProject.user.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -49,19 +48,11 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     );
 
     @Query("""
-            SELECT DISTINCT o FROM Order o
+            SELECT DISTINCT o
+            FROM Order o
             JOIN o.orderItems oi
-            WHERE oi.productId.seller.id = :sellerId
-            AND o.deletedAt IS NULL
-            ORDER BY o.createdAt DESC
+            JOIN oi.productId p
+            WHERE p.seller.id = :sellerId
             """)
-    List<Order> findAllBySellerId(@Param("sellerId") Long sellerId);
-
-    @Query("""
-            SELECT COUNT(o) > 0 FROM Order o
-            JOIN o.orderItems oi
-            WHERE o.id = :orderId
-            AND oi.productId.seller.id = :sellerId
-            """)
-    boolean existsByIdAndSellerId(@Param("orderId") Long orderId, @Param("sellerId") Long sellerId);
+    List<Order> findDistinctBySellerId(Long sellerId);
 }

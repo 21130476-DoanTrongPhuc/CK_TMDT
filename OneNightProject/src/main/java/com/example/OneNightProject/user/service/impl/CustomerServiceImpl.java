@@ -33,18 +33,12 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
-    @Autowired
-    private CustomerMapper customerMapper;
-    @Autowired
-    private CustomerRepository customerRepository;
-    @Autowired
-    private VerificationTokenRepository tokenRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JavaMailSender mailSender;
-    @Autowired
-    private JwtService jwtService;
+    private final CustomerMapper customerMapper;
+    private final CustomerRepository customerRepository;
+    private final VerificationTokenRepository tokenRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JavaMailSender mailSender;
+    private final JwtService jwtService;
     @Override
     public CustomerResponse register(CustomerRequest request) {
 
