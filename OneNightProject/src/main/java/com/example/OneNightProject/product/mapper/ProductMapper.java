@@ -53,6 +53,13 @@ public class ProductMapper {
                 Double avgRating = reviewRepository
                                 .getAverageRating(product.getId());
 
+                return product;
+        }
+
+        public ProductResponse toResponse(Product product) {
+                Double avgRating = reviewRepository
+                                .getAverageRating(product.getId());
+
                 Long totalReviews = reviewRepository
                                 .countByProductIdAndStatus(
                                                 product.getId(),
@@ -145,5 +152,12 @@ public class ProductMapper {
                         Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
                         product.setCategory(category);
                 }
+}
+
+        if(request.getCategoryId()!=null)
+
+        {
+                Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+                product.setCategory(category);
         }
 }

@@ -40,23 +40,22 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
         Optional<Order> findByIdAndUserId(
                         Long orderId,
-                        Long userId);<<<<<<<HEAD
+                        Long userId);
 
         @Query("""
-            SELECT DISTINCT o FROM Order o
-            JOIN o.orderItems oi
-            WHERE oi.productId.seller.id = :sellerId
-            AND o.deletedAt IS NULL
-            ORDER BY o.createdAt DESC
-            """)
-
+                        SELECT DISTINCT o FROM Order o
+                        JOIN o.orderItems oi
+                        WHERE oi.productId.seller.id = :sellerId
+                        AND o.deletedAt IS NULL
+                        ORDER BY o.createdAt DESC
+                        """)
         List<Order> findAllBySellerId(@Param("sellerId") Long sellerId);
 
-    @Query("""
-            SELECT COUNT(o) > 0 FROM Order o
-            JOIN o.orderItems oi
-            WHERE o.id = :orderId
-            AND oi.productId.seller.id = :sellerId
-            """)
-    boolean existsByIdAndSellerId(@Param("orderId") Long orderId, @Param("sellerId") Long sellerId);=======>>>>>>>6e281d 1956 bbf1b50a1ec30263ae30f76e3efb9b
+        @Query("""
+                        SELECT COUNT(o) > 0 FROM Order o
+                        JOIN o.orderItems oi
+                        WHERE o.id = :orderId
+                        AND oi.productId.seller.id = :sellerId
+                        """)
+        boolean existsByIdAndSellerId(@Param("orderId") Long orderId, @Param("sellerId") Long sellerId);
 }
