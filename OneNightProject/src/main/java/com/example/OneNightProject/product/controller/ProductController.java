@@ -36,12 +36,11 @@ public class ProductController {
      * Phân trang sản phẩm
      */
     @GetMapping
-    public ResponseEntity<Page<ProductResponse>>pagination(
+    public ResponseEntity<Page<ProductResponse>> pagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "true") boolean ascending
-    ){
+            @RequestParam(defaultValue = "true") boolean ascending) {
         Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<ProductResponse> paginate = productService.findAll(pageable);
@@ -53,7 +52,7 @@ public class ProductController {
      * Tìm sản phẩm theo ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getById(@PathVariable Long id){
+    public ResponseEntity<ProductResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getById(id));
     }
 
@@ -61,7 +60,7 @@ public class ProductController {
      * Tạo sản phẩm
      */
     @PostMapping
-    public ResponseEntity<ProductResponse> create(@RequestBody ProductRequest request){
+    public ResponseEntity<ProductResponse> create(@RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.create(request));
     }
 
@@ -77,7 +76,7 @@ public class ProductController {
      * Xóa sảm phẩm
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         productService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -86,18 +85,14 @@ public class ProductController {
      * Tìm kiếm sản phẩm và lọc sản phẩm
      */
     @PostMapping("/filter")
-    public ResponseEntity<Page<ProductResponse>>
-    filterProducts(
+    public ResponseEntity<Page<ProductResponse>> filterProducts(
             @RequestBody ProductFilterRequest request,
-            @PageableDefault(size = 20)
-            Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
 
         return ResponseEntity.ok(
                 productService.filterProducts(
                         request,
-                        pageable
-                )
-        );
+                        pageable));
     }
 
     /**
@@ -106,8 +101,7 @@ public class ProductController {
     @PostMapping(value = "/upload/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProductImage upload(
             @PathVariable Long productId,
-            @RequestParam("file") MultipartFile file
-    ) {
+            @RequestParam("file") MultipartFile file) {
         return productImageService.uploadImage(productId, file);
     }
 
@@ -116,14 +110,20 @@ public class ProductController {
      */
     @GetMapping("getImage/{productId}")
     public ResponseEntity<?> getImages(
-            @PathVariable Long productId
-    ) {
+            @PathVariable Long productId) {
 
         return ResponseEntity.ok(
                 imageRepository.findByProductId(
-                        productId
-                )
-        );
+                        productId));
+    }
+
+    /**
+     * Xóa ảnh theo imageId
+     */
+    @DeleteMapping("/images/{imageId}")
+    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
+        productImageService.deleteImage(imageId);
+        return ResponseEntity.noContent().build();
     }
 
     /**

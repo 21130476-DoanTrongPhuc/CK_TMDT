@@ -29,10 +29,10 @@ public class Product {
     @Column(name = "id")
     private Long id;
 
-    @Column (name = "name", nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column (name = "description")
+    @Column(name = "description")
     private String description;
 
     @Column(name = "price", nullable = false)
@@ -45,9 +45,9 @@ public class Product {
     @Column(name = "status")
     private ProductStatus status;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "brand_id")
-//    private Brand brand;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "brand_id")
+    // private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -60,19 +60,11 @@ public class Product {
     @OneToMany(mappedBy = "product")
     @JsonManagedReference
     private List<CartItem> cartItem;
-    @OneToMany(
-            mappedBy = "product",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<ProductImage> images = new ArrayList<>();
 
-    @OneToMany(
-            mappedBy = "productId",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "productId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "product")
