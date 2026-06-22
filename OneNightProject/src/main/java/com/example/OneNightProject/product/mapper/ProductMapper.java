@@ -3,15 +3,15 @@ package com.example.OneNightProject.product.mapper;
 import com.example.OneNightProject.product.dto.request.ProductRequest;
 import com.example.OneNightProject.product.dto.response.ProductImageResponse;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
+import com.example.OneNightProject.product.entity.Category;
 import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.product.entity.ProductImage;
+import com.example.OneNightProject.product.repository.CategoryRepository;
 import com.example.OneNightProject.review.enums.ReviewStatus;
 import com.example.OneNightProject.review.repository.ReviewRepository;
 import com.example.OneNightProject.user.entity.Users;
 import com.example.OneNightProject.user.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +26,8 @@ public class ProductMapper {
     private final ReviewRepository reviewRepository;
     @Autowired
     private final CustomerRepository userRepository;
+    @Autowired
+    private final CategoryRepository categoryRepository;
 
     public Product toEntity(ProductRequest request){
         Product product = new Product();
@@ -36,7 +38,13 @@ public class ProductMapper {
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setStatus(request.getStatus());
+        product.setAllowCustomization(request.getAllowCustomization());
         product.setSeller(users);
+
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+            product.setCategory(category);
+        }
 
         return product;
     }
@@ -141,6 +149,11 @@ public class ProductMapper {
         if(request.getAllowCustomization() != null){
             product.setAllowCustomization(
                     request.getAllowCustomization());
+        }
+
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+            product.setCategory(category);
         }
     }
 }

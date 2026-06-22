@@ -89,7 +89,6 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @UpdateTimestamp
     @Column(name = "deleted_at")
     private LocalDateTime deleteAt;
 }

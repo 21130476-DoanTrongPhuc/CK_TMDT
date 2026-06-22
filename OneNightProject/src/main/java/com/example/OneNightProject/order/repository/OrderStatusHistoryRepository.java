@@ -1,4 +1,7 @@
 package com.example.OneNightProject.order.repository;
 
-public interface OrderStatusHistoryRepository {
+import com.example.OneNightProject.order.entity.OrderStatusHistory;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface OrderStatusHistoryRepository extends JpaRepository<OrderStatusHistory, Long> {
 }

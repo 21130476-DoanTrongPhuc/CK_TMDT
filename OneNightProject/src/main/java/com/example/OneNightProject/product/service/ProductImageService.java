@@ -10,4 +10,6 @@ public interface ProductImageService {
     ProductImage uploadImage(Long productId, MultipartFile file);
 
     List<ProductImage> uploadImages(Long productId, MultipartFile[] files);
+
+    void deleteImage(Long imageId);
 }
