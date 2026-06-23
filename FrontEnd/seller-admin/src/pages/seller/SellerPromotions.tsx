@@ -98,6 +98,10 @@ export default function SellerPromotions() {
             showToast('Mức giảm theo phần trăm không được vượt quá 100%', 'error');
             return;
         }
+        if (form.usageLimit !== null && form.usageLimit <= 0) {
+            showToast('Lượt sử dụng phải lớn hơn 0', 'error');
+            return;
+        }
         if (new Date(form.startDate) > new Date(form.endDate)) {
             showToast('Ngày kết thúc phải sau ngày bắt đầu', 'error');
             return;
@@ -129,6 +133,16 @@ export default function SellerPromotions() {
             showToast('Đã xóa khuyến mãi', 'success');
         } catch {
             showToast('Xóa thất bại', 'error');
+        }
+    }
+
+    async function handleToggleActive(item: Promotion) {
+        try {
+            await promotionApi.toggleActive(item.id, !item.active);
+            await load(page);
+            showToast(item.active ? 'Đã tắt khuyến mãi' : 'Đã bật khuyến mãi', 'success');
+        } catch {
+            showToast('Cập nhật trạng thái thất bại', 'error');
         }
     }
 
@@ -167,6 +181,7 @@ export default function SellerPromotions() {
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Tên</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Loại</th>
                                 <th className="text-right px-4 py-3 font-semibold text-gray-600">Giá trị</th>
+                                <th className="text-center px-4 py-3 font-semibold text-gray-600">Dùng</th>
                                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Kích hoạt</th>
                                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Thao tác</th>
                             </tr>
@@ -184,11 +199,24 @@ export default function SellerPromotions() {
                                         {item.discountType === 'PERCENTAGE' ? `${item.discountValue}%` : formatMoney(item.discountValue)}
                                         {item.maxDiscountAmount ? <div className="text-xs text-gray-400">Tối đa {formatMoney(item.maxDiscountAmount)}</div> : null}
                                     </td>
+                                    <td className="px-4 py-3 text-center text-gray-600">
+                                        {item.usageLimit ? (
+                                            <div>
+                                                <div className="font-medium">{item.usedCount}/{item.usageLimit}</div>
+                                                <div className="text-xs text-gray-400">lượt</div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-gray-400">Không giới hạn</span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3 text-center">{item.active ? 'Đang chạy' : 'Tắt'}</td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-center gap-1">
                                             <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600">
                                                 <Pencil size={15} />
+                                            </button>
+                                            <button onClick={() => handleToggleActive(item)} className="px-2 py-1 rounded-lg hover:bg-gray-100 text-gray-600 text-xs font-medium">
+                                                {item.active ? 'Tắt' : 'Bật'}
                                             </button>
                                             <button onClick={() => handleDelete(item)} className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500">
                                                 <Trash2 size={15} />
@@ -248,6 +276,7 @@ export default function SellerPromotions() {
                                 <input type="number" min={0} value={form.minOrderValue} onChange={(e) => setForm({ ...form, minOrderValue: Number(e.target.value) })} placeholder="Đơn tối thiểu" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <input type="number" min={1} value={form.usageLimit ?? ''} onChange={(e) => setForm({ ...form, usageLimit: e.target.value ? Number(e.target.value) : null })} placeholder="Giới hạn lượt dùng" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                                 <input type="number" min={0} value={form.maxDiscountAmount ?? ''} onChange={(e) => setForm({ ...form, maxDiscountAmount: e.target.value ? Number(e.target.value) : null })} placeholder="Giá trị tối đa" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                                 <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                                 <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />

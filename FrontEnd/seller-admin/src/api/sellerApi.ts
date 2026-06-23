@@ -20,6 +20,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED';
 export type ReviewStatus = 'VISIBLE' | 'HIDDEN';
 export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
+export type PaymentStatusOrder = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
 export type Period = 'day' | 'month' | 'quarter' | 'year';
 export type ProductStatus = 'ACTIVE' | 'OUT_OF_STOCK' | 'DISCONTINUED';
 
@@ -108,6 +109,32 @@ export interface DashboardData {
   revenueByDay: RevenuePoint[];
 }
 
+export interface SellerPaymentSummary {
+  totalPayments: number;
+  paidPayments: number;
+  pendingPayments: number;
+  failedPayments: number;
+  refundedPayments: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+
+export interface SellerPayment {
+  paymentId: number;
+  paymentCode: string;
+  orderId: number | null;
+  orderCode: string | null;
+  buyerName: string | null;
+  paymentMethod: 'COD' | 'ONLINE';
+  paymentStatus: PaymentStatus;
+  orderPaymentStatus: 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
+  orderStatus: OrderStatus;
+  amount: number;
+  transactionId: string | null;
+  createdAt: string;
+  paidAt: string | null;
+}
+
 export const sellerApi = {
   getDashboard: () => request<DashboardData>('/seller/dashboard'),
   getRevenue: (period: Period) => request<RevenuePoint[]>(`/seller/revenue?period=${period}`),
@@ -170,6 +197,46 @@ export interface Order {
   createdAt: string;
 }
 
+export interface OrderItemDetail {
+  id: number;
+  productId: number;
+  productName: string | null;
+  quantity: number;
+  price: number;
+  customized: boolean | null;
+  customizationPrice: number | null;
+  customText: string | null;
+  customNote: string | null;
+  customImage: string | null;
+}
+
+export interface OrderDetail {
+  id: number;
+  orderCode: string;
+  userId: number;
+  totalPrice: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  createdAt: string;
+  items: OrderItemDetail[];
+}
+
+export interface SellerCustomOrder {
+  orderId: number;
+  orderCode: string;
+  buyerName: string | null;
+  customItems: number;
+  customAmount: number;
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatusOrder;
+  createdAt: string;
+}
+
 export interface OrderFilterForm {
   orderCode?: string;
   status?: OrderStatus | '';
@@ -202,6 +269,12 @@ export const orderApi = {
     }).then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }),
+
+  listSellerCustomOrders: (page = 0, size = 10) =>
+    request<Page<SellerCustomOrder>>(`/v1/seller/custom-orders?page=${page}&size=${size}`),
+
+  getSellerCustomOrderDetail: (orderId: number) =>
+    request<OrderDetail>(`/v1/seller/custom-orders/${orderId}`),
 };
 
 export interface Review {
@@ -309,4 +382,16 @@ export const promotionApi = {
     }).then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }),
+
+  toggleActive: (id: number, active: boolean) =>
+    request<Promotion>(`/v1/seller/promotions/${id}/active`, {
+      method: 'PATCH',
+      body: JSON.stringify(active),
+    }),
+};
+
+export const paymentApi = {
+  summary: () => request<SellerPaymentSummary>('/v1/seller/payments/summary'),
+  list: (page = 0, size = 10) =>
+    request<Page<SellerPayment>>(`/v1/seller/payments?page=${page}&size=${size}`),
 };

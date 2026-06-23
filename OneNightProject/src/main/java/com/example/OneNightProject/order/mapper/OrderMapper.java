@@ -212,6 +212,10 @@ public class OrderMapper {
                             item.getProductId().getId()
                     );
 
+                    response.setProductName(
+                            item.getProductId().getName()
+                    );
+
                     response.setQuantity(
                             item.getQuantity()
                     );

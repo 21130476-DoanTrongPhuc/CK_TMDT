@@ -45,9 +45,9 @@ public class Product {
     @Column(name = "status")
     private ProductStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id")
-    private Brand brand;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "brand_id")
+//    private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -78,7 +78,7 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<Review> reviews;
 
-    @Column(name = "allow_customization")
+    @JoinColumn(name = "allow_customization")
     private Boolean allowCustomization;
 
     @CreationTimestamp
@@ -89,7 +89,6 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @UpdateTimestamp
     @Column(name = "deleted_at")
     private LocalDateTime deleteAt;
 }

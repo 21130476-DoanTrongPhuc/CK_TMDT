@@ -6,7 +6,10 @@ import com.example.OneNightProject.order.enums.OrderStatus;
 import com.example.OneNightProject.user.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -54,5 +57,55 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             JOIN oi.productId p
             WHERE p.seller.id = :sellerId
             """)
-    List<Order> findDistinctBySellerId(Long sellerId);
+    List<Order> findDistinctBySellerId(@Param("sellerId") Long sellerId);
+
+    @Query(
+            value = """
+                    SELECT DISTINCT o
+                    FROM Order o
+                    JOIN o.orderItems oi
+                    JOIN oi.productId p
+                    WHERE p.seller.id = :sellerId
+                      AND oi.isCustomized = true
+                    ORDER BY o.createdAt DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(DISTINCT o.id)
+                    FROM Order o
+                    JOIN o.orderItems oi
+                    JOIN oi.productId p
+                    WHERE p.seller.id = :sellerId
+                      AND oi.isCustomized = true
+                    """
+    )
+    Page<Order> findDistinctBySellerId(@Param("sellerId") Long sellerId, Pageable pageable);
+
+    @Query(
+            value = """
+                    SELECT DISTINCT o
+                    FROM Order o
+                    JOIN o.orderItems oi
+                    JOIN oi.productId p
+                    WHERE p.seller.id = :sellerId
+                      AND oi.isCustomized = true
+                      AND o.id = :orderId
+                    """)
+    Optional<Order> findSellerCustomOrderById(
+            @Param("orderId") Long orderId,
+            @Param("sellerId") Long sellerId
+    );
+
+    @Query("""
+            SELECT COUNT(oi) > 0
+            FROM Order o
+            JOIN o.orderItems oi
+            JOIN oi.productId p
+            WHERE o.id = :orderId
+              AND p.seller.id = :sellerId
+              AND oi.isCustomized = true
+            """)
+    boolean existsSellerCustomOrder(
+            @Param("orderId") Long orderId,
+            @Param("sellerId") Long sellerId
+    );
 }
