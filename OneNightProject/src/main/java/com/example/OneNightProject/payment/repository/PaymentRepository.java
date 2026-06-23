@@ -4,6 +4,7 @@ import com.example.OneNightProject.order.entity.Order;
 import com.example.OneNightProject.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public interface PaymentRepository
         SELECT p FROM Payment p
         WHERE p.order.id = :orderId
     """)
-    Payment findByOrder(Long orderId);
+    Payment findByOrder(@Param("orderId") Long orderId);
 
     Optional<Payment> findTopByOrderOrderByCreatedAtDesc(Order order);
 

@@ -9,5 +9,5 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 public class ProductImageResponse {
     private Long id;
-    private String imageUrl;
+    private String image_url;
 }

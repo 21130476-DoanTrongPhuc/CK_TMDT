@@ -100,7 +100,11 @@ public class ProductController {
      */
     @PostMapping(value = "/upload/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProductImage upload(
+            @RequestHeader("Authorization") String authHeader,
             @PathVariable Long productId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return productImageService.uploadImage(authHeader, productId, file);
             @RequestParam("file") MultipartFile file) {
         return productImageService.uploadImage(productId, file);
     }
@@ -115,15 +119,6 @@ public class ProductController {
         return ResponseEntity.ok(
                 imageRepository.findByProductId(
                         productId));
-    }
-
-    /**
-     * Xóa ảnh theo imageId
-     */
-    @DeleteMapping("/images/{imageId}")
-    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
-        productImageService.deleteImage(imageId);
-        return ResponseEntity.noContent().build();
     }
 
     /**

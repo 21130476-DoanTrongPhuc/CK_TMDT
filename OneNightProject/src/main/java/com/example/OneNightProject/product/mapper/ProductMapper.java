@@ -160,4 +160,6 @@ public class ProductMapper {
                 Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
                 product.setCategory(category);
         }
+    }
+}
 }

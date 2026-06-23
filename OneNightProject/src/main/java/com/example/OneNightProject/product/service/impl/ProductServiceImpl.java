@@ -4,7 +4,6 @@ import com.example.OneNightProject.product.dto.request.ProductFilterRequest;
 import com.example.OneNightProject.product.dto.request.ProductRequest;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
 import com.example.OneNightProject.product.entity.Product;
-import com.example.OneNightProject.product.enums.ProductStatus;
 import com.example.OneNightProject.product.mapper.ProductMapper;
 import com.example.OneNightProject.product.repository.ProductRepository;
 import com.example.OneNightProject.product.repository.ProductSpecification;
@@ -209,6 +208,165 @@ public class ProductServiceImpl implements ProductService {
                                 .map(productMapper::toResponse);
         }
 
+        return PageRequest.of(
+                page,
+                size,
+                sort
+        );
+    }
+
+    @Override
+    public Page<ProductResponse> getProductsBySeller(Long sellerId, Pageable pageable) {
+        return null;
+    }
+
+    // =========================
+    // SEARCH PRODUCT
+    // =========================
+    public Page<ProductResponse> searchProducts(
+            String keyword,
+            Pageable pageable) {
+
+        Specification<Product> spec = (root, query, cb) -> {
+
+            if (keyword == null || keyword.isBlank()) {
+                return cb.conjunction();
+            }
+
+            return cb.like(
+                    cb.lower(root.get("name")),
+                    "%" + keyword.toLowerCase() + "%"
+            );
+        };
+
+        return productRepository
+                .findAll(spec, pageable)
+                .map(productMapper::toResponse);
+    }
+
+    @Override
+    public List<ProductResponse> bestSellingProducts() {
+        return null;
+    }
+
+
+    // =========================
+    // BY CATEGORY
+    // =========================
+    public Page<ProductResponse> getByCategory(
+            Long categoryId,
+            Pageable pageable) {
+
+        Specification<Product> spec = (root, query, cb) ->
+                cb.equal(root.get("category").get("id"), categoryId);
+
+        return productRepository
+                .findAll(spec, pageable)
+                .map(productMapper::toResponse);
+    }
+
+    // =========================
+    // BY BRAND
+    // =========================
+    public Page<ProductResponse> getByBrand(
+            Long brandId,
+            Pageable pageable) {
+
+        Specification<Product> spec = (root, query, cb) ->
+                cb.equal(root.get("brand").get("id"), brandId);
+
+        return productRepository
+                .findAll(spec, pageable)
+                .map(productMapper::toResponse);
+    }
+
+    // =========================
+    // BY SELLER
+    // =========================
+    public Page<ProductResponse> getBySeller(
+            Long sellerId,
+            Pageable pageable) {
+
+        Specification<Product> spec = (root, query, cb) ->
+                cb.equal(root.get("seller").get("id"), sellerId);
+
+        return productRepository
+                .findAll(spec, pageable)
+                .map(productMapper::toResponse);
+    }
+
+    // =========================
+    // NEWEST PRODUCTS
+    // =========================
+    public List<ProductResponse> getNewestProducts() {
+
+        Pageable pageable = PageRequest.of(
+                0,
+                10,
+                Sort.by("createdAt").descending()
+        );
+
+        return productRepository
+                .findAll(pageable)
+                .map(productMapper::toResponse)
+                .getContent();
+    }
+
+    // =========================
+    // BEST SELLER (placeholder logic)
+    // =========================
+    public List<ProductResponse> getBestSellers() {
+
+        // NOTE: cần order_items để tính thật
+        Pageable pageable = PageRequest.of(
+                0,
+                10
+        );
+
+        return productRepository
+                .findAll(pageable)
+                .map(productMapper::toResponse)
+                .getContent();
+    }
+
+    // =========================
+    // MOST VIEWED (placeholder logic)
+    // =========================
+    public List<ProductResponse> getMostViewed() {
+
+        Pageable pageable = PageRequest.of(
+                0,
+                10
+        );
+
+        return productRepository
+                .findAll(pageable)
+                .map(productMapper::toResponse)
+                .getContent();
+    }
+
+    // =========================
+    // RELATED PRODUCTS
+    // =========================
+    public List<ProductResponse> getRelatedProducts(Long productId) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() ->
+                        new RuntimeException("Product not found"));
+
+        Specification<Product> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("category").get("id"),
+                        product.getCategory().getId()),
+                cb.notEqual(root.get("id"), productId)
+        );
+
+        Pageable pageable = PageRequest.of(0, 8);
+
+        return productRepository
+                .findAll(spec, pageable)
+                .map(productMapper::toResponse)
+                .getContent();
+    }
         @Override
         public List<ProductResponse> bestSellingProducts() {
                 return null;

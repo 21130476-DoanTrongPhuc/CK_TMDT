@@ -4,6 +4,9 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
+  ClipboardList,
+  Tag,
+  CreditCard,
   Star,
   LogOut,
   Menu,
@@ -20,6 +23,9 @@ const SELLER_NAV = [
   { to: '/seller/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
   { to: '/seller/products', label: 'Sản phẩm', icon: Package },
   { to: '/seller/orders', label: 'Đơn hàng', icon: ShoppingBag },
+  { to: '/seller/custom-orders', label: 'Custom orders', icon: ClipboardList },
+  { to: '/seller/payments', label: 'Thanh toán', icon: CreditCard },
+  { to: '/seller/promotions', label: 'Khuyến mãi', icon: Tag },
 ];
 
 const ADMIN_NAV = [
