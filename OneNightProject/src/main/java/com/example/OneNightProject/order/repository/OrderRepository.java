@@ -108,4 +108,48 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             @Param("orderId") Long orderId,
             @Param("sellerId") Long sellerId
     );
+        boolean existsByStatus(
+                        OrderStatus status);
+
+        Optional<Order> findFirstByUserIdAndStatus(
+                        Long userId,
+                        OrderStatus status);
+
+        List<Order> findAllByUserId(
+                        Long userId);
+
+        @Query("""
+                            SELECT COUNT(oi) > 0
+                            FROM Order o
+                            JOIN o.orderItems oi
+                            WHERE o.id = :orderId
+                              AND oi.isCustomized = true
+                        """)
+        boolean isOrderCustomized(
+                        Long orderId);
+
+        Optional<Order> findFirstByUserAndStatus(
+                        Users user,
+                        OrderStatus status);
+
+        Optional<Order> findByIdAndUserId(
+                        Long orderId,
+                        Long userId);
+
+        @Query("""
+                        SELECT DISTINCT o FROM Order o
+                        JOIN o.orderItems oi
+                        WHERE oi.productId.seller.id = :sellerId
+                        AND o.deletedAt IS NULL
+                        ORDER BY o.createdAt DESC
+                        """)
+        List<Order> findAllBySellerId(@Param("sellerId") Long sellerId);
+
+        @Query("""
+                        SELECT COUNT(o) > 0 FROM Order o
+                        JOIN o.orderItems oi
+                        WHERE o.id = :orderId
+                        AND oi.productId.seller.id = :sellerId
+                        """)
+        boolean existsByIdAndSellerId(@Param("orderId") Long orderId, @Param("sellerId") Long sellerId);
 }

@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 @Service
 @RequiredArgsConstructor
 public class ProductImageServiceImpl implements ProductImageService {
@@ -36,6 +35,8 @@ public class ProductImageServiceImpl implements ProductImageService {
     public ProductImage uploadImage(String authHeader, Long productId, MultipartFile file) {
         try{
             Product product = getSellerProduct(authHeader, productId);
+    public ProductImage uploadImage(Long productId, MultipartFile file) {
+        try {
             validateFile(file);
 
             Map uploadResult = cloudinaryService.upload(file);
@@ -49,7 +50,7 @@ public class ProductImageServiceImpl implements ProductImageService {
                     .build();
 
             return imageRepository.save(image);
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

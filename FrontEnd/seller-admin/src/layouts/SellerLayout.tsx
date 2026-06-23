@@ -13,6 +13,9 @@ import {
   X,
   Bell,
   Hammer,
+  Users,
+  ClipboardList,
+  CheckSquare,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -25,6 +28,11 @@ const SELLER_NAV = [
   { to: '/seller/promotions', label: 'Khuyến mãi', icon: Tag },
 ];
 
+const ADMIN_NAV = [
+  { to: '/admin/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
+  { to: '/admin/products', label: 'Duyệt sản phẩm', icon: CheckSquare },
+  { to: '/admin/orders', label: 'Đơn hàng', icon: ClipboardList },
+  { to: '/admin/users', label: 'Người dùng', icon: Users },
 const ADMIN_EXTRA_NAV = [
   { to: '/admin/reviews', label: 'Đánh giá', icon: Star },
 ];
@@ -37,6 +45,7 @@ function SidebarContent({
   onLogout: () => void;
 }) {
   const { user } = useAuth();
+  const navItems = user?.role === 'ADMIN' ? ADMIN_NAV : SELLER_NAV;
   const navItems = user?.role === 'ADMIN' ? ADMIN_EXTRA_NAV : SELLER_NAV;
 
   return (
@@ -44,6 +53,7 @@ function SidebarContent({
       {/* Logo */}
       <div className="h-16 flex items-center px-5 border-b border-gray-100 shrink-0">
         <Link
+          to={user?.role === 'ADMIN' ? '/admin/dashboard' : '/seller/dashboard'}
           to="/seller/dashboard"
           className="flex items-center gap-2.5"
           onClick={onItemClick}
@@ -73,10 +83,9 @@ function SidebarContent({
               to={item.to}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-                  isActive
-                    ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${isActive
+                  ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`
               }
             >

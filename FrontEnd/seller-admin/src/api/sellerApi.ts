@@ -22,7 +22,7 @@ export type ReviewStatus = 'VISIBLE' | 'HIDDEN';
 export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
 export type PaymentStatusOrder = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
 export type Period = 'day' | 'month' | 'quarter' | 'year';
-export type ProductStatus = 'ACTIVE' | 'OUT_OF_STOCK' | 'DISCONTINUED';
+export type ProductStatus = 'PENDING_APPROVAL' | 'ACTIVE' | 'OUT_OF_STOCK' | 'DISCONTINUED' | 'REJECTED';
 
 export interface ProductImage {
   id: number;
@@ -377,6 +377,160 @@ export const promotionApi = {
 
   delete: (id: number) =>
     fetch(`${BASE_URL}/v1/seller/promotions/${id}`, {
+// ---- Admin Dashboard ----
+
+export interface AdminDashboardData {
+  totalUsers: number;
+  totalSellers: number;
+  totalProducts: number;
+  totalOrders: number;
+  revenueThisMonth: number;
+  todayOrders: number;
+  pendingApprovalProducts: number;
+  orderStatusCounts: OrderStatusCount[];
+  recentOrders: RecentOrder[];
+  topProducts: TopProduct[];
+  revenueByDay: RevenuePoint[];
+}
+
+export const adminDashboardApi = {
+  getDashboard: () => request<AdminDashboardData>('/admin/dashboard'),
+  getRevenue: (period: Period) => request<RevenuePoint[]>(`/admin/revenue?period=${period}`),
+};
+
+// ---- Admin Products ----
+
+export const adminProductApi = {
+  list: (params?: { status?: ProductStatus; keyword?: string; page?: number; size?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.keyword) q.set('keyword', params.keyword);
+    q.set('page', String(params?.page ?? 0));
+    q.set('size', String(params?.size ?? 20));
+    return request<Page<Product>>(`/admin/products?${q.toString()}`);
+  },
+  getById: (id: number) => request<Product>(`/admin/products/${id}`),
+  approve: (id: number) =>
+    fetch(`${BASE_URL}/admin/products/${id}/approve`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<Product>;
+    }),
+  reject: (id: number) =>
+    fetch(`${BASE_URL}/admin/products/${id}/reject`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<Product>;
+    }),
+};
+
+// ---- Admin Orders (read-only) ----
+
+export interface AdminOrder {
+  id: number;
+  orderCode: string;
+  totalPrice: number;
+  totalItems: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  receiverName: string;
+  receiverPhone: string;
+  createdAt: string;
+}
+
+export interface AdminOrderDetail {
+  id: number;
+  orderCode: string;
+  userId: number;
+  totalPrice: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  createdAt: string;
+  items: {
+    id: number;
+    productId: number;
+    quantity: number;
+    price: number;
+    customized: boolean;
+    customizationPrice: number | null;
+    customText: string | null;
+    customNote: string | null;
+    customImage: string | null;
+  }[];
+  statusHistories: {
+    oldStatus: string;
+    newStatus: string;
+    changedAt: string;
+  }[];
+}
+
+export const adminOrderApi = {
+  list: (params?: { page?: number; size?: number }) => {
+    const q = new URLSearchParams();
+    q.set('page', String(params?.page ?? 0));
+    q.set('size', String(params?.size ?? 20));
+    return request<Page<AdminOrder>>(`/admin/orders?${q.toString()}`);
+  },
+  getById: (id: number) => request<AdminOrderDetail>(`/admin/orders/${id}`),
+};
+
+// ---- Admin Users (CRUD) ----
+
+export type UserRole = 'USER' | 'ADMIN' | 'SELLER';
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'BANNED';
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserForm {
+  email: string;
+  password?: string;
+  fullName: string;
+  phone: string;
+  role: UserRole;
+  status?: UserStatus;
+}
+
+export const adminUserApi = {
+  list: (params?: { role?: UserRole; status?: UserStatus; keyword?: string; page?: number; size?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.role) q.set('role', params.role);
+    if (params?.status) q.set('status', params.status);
+    if (params?.keyword) q.set('keyword', params.keyword);
+    q.set('page', String(params?.page ?? 0));
+    q.set('size', String(params?.size ?? 20));
+    return request<Page<AdminUser>>(`/admin/users?${q.toString()}`);
+  },
+  getById: (id: number) => request<AdminUser>(`/admin/users/${id}`),
+  create: (data: AdminUserForm) =>
+    request<AdminUser>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id: number, data: AdminUserForm) =>
+    request<AdminUser>(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id: number) =>
+    fetch(`${BASE_URL}/admin/users/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${getToken()}` },
     }).then((res) => {

@@ -11,6 +11,10 @@ import SellerCustomOrders from './pages/seller/SellerCustomOrders';
 import SellerPayments from './pages/seller/SellerPayments';
 import SellerPromotions from './pages/seller/SellerPromotions';
 import AdminReviews from './pages/admin/AdminReviews';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminUsers from './pages/admin/AdminUsers';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -18,13 +22,14 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const defaultPath = user?.role === 'ADMIN' ? '/admin/dashboard' : '/seller/dashboard';
 
   return (
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/seller/dashboard" replace /> : <Login />}
+        element={isAuthenticated ? <Navigate to={defaultPath} replace /> : <Login />}
       />
       <Route
         path="/"
@@ -34,7 +39,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/seller/dashboard" replace />} />
+        <Route index element={<Navigate to={defaultPath} replace />} />
         <Route path="seller/dashboard" element={<SellerDashboard />} />
         <Route path="seller/products" element={<SellerProducts />} />
         <Route path="seller/orders" element={<SellerOrders />} />
@@ -42,6 +47,10 @@ function AppRoutes() {
         <Route path="seller/payments" element={<SellerPayments />} />
         <Route path="seller/promotions" element={<SellerPromotions />} />
         <Route path="admin/reviews" element={<AdminReviews />} />
+        <Route path="admin/dashboard" element={<AdminDashboard />} />
+        <Route path="admin/products" element={<AdminProducts />} />
+        <Route path="admin/orders" element={<AdminOrders />} />
+        <Route path="admin/users" element={<AdminUsers />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -59,3 +68,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
