@@ -1,15 +1,16 @@
 package com.example.OneNightProject.seller.service.impl;
 
-import com.example.OneNightProject.auth.service.JwtService;
 import com.example.OneNightProject.order.entity.Order;
 import com.example.OneNightProject.order.entity.OrderItem;
 import com.example.OneNightProject.order.enums.OrderStatus;
 import com.example.OneNightProject.order.repository.OrderRepository;
+import com.example.OneNightProject.product.enums.ProductStatus;
 import com.example.OneNightProject.product.repository.ProductRepository;
 import com.example.OneNightProject.review.repository.ReviewRepository;
+import com.example.OneNightProject.seller.dto.AdminDashboardResponse;
 import com.example.OneNightProject.seller.dto.DashboardResponse;
-import com.example.OneNightProject.seller.service.SellerDashboardService;
-import com.example.OneNightProject.user.entity.Users;
+import com.example.OneNightProject.seller.service.AdminDashboardService;
+import com.example.OneNightProject.user.enums.CustomerEnum;
 import com.example.OneNightProject.user.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,52 +27,52 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class SellerDashboardServiceImpl implements SellerDashboardService {
+public class AdminDashboardServiceImpl implements AdminDashboardService {
 
-    private final JwtService jwtService;
     private final CustomerRepository customerRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final ReviewRepository reviewRepository;
 
     @Override
-    public DashboardResponse getDashboard(String authHeader) {
-        String token = authHeader.substring(7);
-        Users seller = customerRepository.findByEmail(jwtService.extractUsername(token));
-
-        List<Order> orders = orderRepository.findAllBySellerId(seller.getId());
+    public AdminDashboardResponse getDashboard() {
+        List<Order> allOrders = orderRepository.findAll();
 
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 
-        BigDecimal revenueThisMonth = orders.stream()
+        // Thống kê tổng
+        long totalUsers = customerRepository.count();
+        long totalSellers = customerRepository.countByRole(CustomerEnum.SELLER);
+        long totalProducts = productRepository.count();
+        long totalOrders = allOrders.size();
+        long pendingApprovalProducts = productRepository.countByStatus(ProductStatus.PENDING_APPROVAL);
+
+        // Doanh thu tháng này (chỉ đơn COMPLETED)
+        BigDecimal revenueThisMonth = allOrders.stream()
                 .filter(o -> o.getStatus() == OrderStatus.COMPLETED
                         && o.getCreatedAt() != null
                         && o.getCreatedAt().isAfter(startOfMonth))
                 .map(o -> o.getTotalPrice() != null ? o.getTotalPrice() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        long totalOrders = orders.size();
-
-        long todayOrders = orders.stream()
+        // Đơn hàng hôm nay
+        long todayOrders = allOrders.stream()
                 .filter(o -> o.getCreatedAt() != null && o.getCreatedAt().isAfter(startOfDay))
                 .count();
 
-        long totalProducts = productRepository.countBySellerId(seller.getId());
-        long totalReviews = reviewRepository.countBySellerId(seller.getId());
-        long newReviews = reviewRepository.countNewBySellerId(seller.getId(), thirtyDaysAgo);
-
-        // Order status counts
-        Map<OrderStatus, Long> statusMap = orders.stream()
+        // Phân bố trạng thái đơn hàng
+        Map<OrderStatus, Long> statusMap = allOrders.stream()
                 .collect(Collectors.groupingBy(Order::getStatus, Collectors.counting()));
         List<DashboardResponse.OrderStatusCount> orderStatusCounts = statusMap.entrySet().stream()
                 .map(e -> new DashboardResponse.OrderStatusCount(e.getKey().name(), e.getValue()))
                 .collect(Collectors.toList());
 
-        // Recent orders (last 5, already sorted DESC by query)
+        // 5 đơn hàng gần nhất
         DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-        List<DashboardResponse.RecentOrder> recentOrders = orders.stream()
+        List<DashboardResponse.RecentOrder> recentOrders = allOrders.stream()
+                .sorted(Comparator.comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(5)
                 .map(o -> new DashboardResponse.RecentOrder(
                         o.getOrderCode(),
@@ -83,13 +84,12 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 ))
                 .collect(Collectors.toList());
 
-        // Top products by total quantity sold
+        // Top 5 sản phẩm bán chạy (toàn hệ thống)
         Map<String, Long> productQtyMap = new LinkedHashMap<>();
-        for (Order order : orders) {
+        for (Order order : allOrders) {
             if (order.getOrderItems() == null) continue;
             for (OrderItem item : order.getOrderItems()) {
                 if (item.getProductId() == null) continue;
-                if (!seller.getId().equals(item.getProductId().getSeller().getId())) continue;
                 String name = item.getProductId().getName();
                 long qty = item.getQuantity() != null ? item.getQuantity() : 0L;
                 productQtyMap.merge(name, qty, Long::sum);
@@ -101,10 +101,10 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 .map(e -> new DashboardResponse.TopProduct(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
 
-        // Revenue by day (last 30 days, COMPLETED orders only)
+        // Doanh thu theo ngày (30 ngày gần nhất, COMPLETED)
         DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         Map<String, BigDecimal> revenueMap = new TreeMap<>();
-        for (Order order : orders) {
+        for (Order order : allOrders) {
             if (order.getStatus() != OrderStatus.COMPLETED) continue;
             if (order.getCreatedAt() == null || order.getCreatedAt().isBefore(thirtyDaysAgo)) continue;
             String day = order.getCreatedAt().format(dayFmt);
@@ -115,13 +115,14 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 .map(e -> new DashboardResponse.RevenuePoint(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
 
-        return DashboardResponse.builder()
-                .revenueThisMonth(revenueThisMonth)
-                .totalOrders(totalOrders)
-                .todayOrders(todayOrders)
+        return AdminDashboardResponse.builder()
+                .totalUsers(totalUsers)
+                .totalSellers(totalSellers)
                 .totalProducts(totalProducts)
-                .totalReviews(totalReviews)
-                .newReviews(newReviews)
+                .totalOrders(totalOrders)
+                .revenueThisMonth(revenueThisMonth)
+                .todayOrders(todayOrders)
+                .pendingApprovalProducts(pendingApprovalProducts)
                 .orderStatusCounts(orderStatusCounts)
                 .recentOrders(recentOrders)
                 .topProducts(topProducts)
@@ -130,12 +131,8 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
     }
 
     @Override
-    public List<DashboardResponse.RevenuePoint> getRevenue(String authHeader, String period) {
-        String token = authHeader.substring(7);
-        Users seller = customerRepository.findByEmail(jwtService.extractUsername(token));
-        List<Order> orders = orderRepository.findAllBySellerId(seller.getId());
-
-        List<Order> completed = orders.stream()
+    public List<DashboardResponse.RevenuePoint> getRevenue(String period) {
+        List<Order> completed = orderRepository.findAll().stream()
                 .filter(o -> o.getStatus() == OrderStatus.COMPLETED && o.getCreatedAt() != null)
                 .collect(Collectors.toList());
 
@@ -169,7 +166,6 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 });
             }
             default -> {
-                // day — last 30 days
                 LocalDateTime since = LocalDateTime.now().minusDays(30);
                 DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 completed.stream()

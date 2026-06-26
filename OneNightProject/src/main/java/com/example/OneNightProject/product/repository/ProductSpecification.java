@@ -3,8 +3,6 @@ package com.example.OneNightProject.product.repository;
 import com.example.OneNightProject.product.dto.request.ProductFilterRequest;
 import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.review.entity.Review;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
@@ -105,20 +103,7 @@ public class ProductSpecification {
                 );
             }
 
-            if(request.getMinRating() != null){
-
-                Join<Product, Review> reviewJoin =
-                        root.join("reviews", JoinType.LEFT);
-
-                query.groupBy(root.get("id"));
-
-                query.having(
-                        cb.greaterThanOrEqualTo(
-                                cb.avg(reviewJoin.get("rating")),
-                                request.getMinRating()
-                        )
-                );
-            }
+            // Min rating filtering can be handled via aggregation later if needed.
 
             return cb.and(
                     predicates.toArray(new Predicate[0]));

@@ -92,6 +92,55 @@ public class OrderMapper {
                 .build();
     }
 
+    public OrderListResponse toSellerListResponse(
+            Order order,
+            Long sellerId
+    ) {
+        List<OrderItem> sellerItems = order.getOrderItems() == null
+                ? Collections.emptyList()
+                : order.getOrderItems().stream()
+                .filter(item -> item.getProductId() != null)
+                .filter(item -> item.getProductId().getSeller() != null)
+                .filter(item -> item.getProductId().getSeller().getId().equals(sellerId))
+                .toList();
+
+        BigDecimal sellerTotal = sellerItems.stream()
+                .map(this::calculateItemTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int sellerTotalItems = sellerItems.stream()
+                .map(OrderItem::getQuantity)
+                .filter(java.util.Objects::nonNull)
+                .reduce(0, Integer::sum);
+
+        return OrderListResponse.builder()
+                .id(order.getId())
+                .orderCode(order.getOrderCode())
+                .totalPrice(sellerTotal)
+                .totalItems(sellerTotalItems)
+                .status(order.getStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .receiverName(order.getReceiverName())
+                .receiverPhone(order.getReceiverPhone())
+                .createdAt(order.getCreatedAt())
+                .build();
+    }
+
+    private BigDecimal calculateItemTotal(OrderItem item) {
+        int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
+        BigDecimal basePrice = item.getPrice() == null
+                ? BigDecimal.ZERO
+                : item.getPrice().multiply(BigDecimal.valueOf(quantity));
+
+        if (item.isCustomized() &&
+                item.getPriceCustomProduct() != null &&
+                item.getPriceCustomProduct().compareTo(BigDecimal.ZERO) > 0) {
+            return item.getPriceCustomProduct();
+        }
+
+        return basePrice;
+    }
+
     public OrderDetailResponse toDetailResponse(
             Order order
     ){
@@ -161,6 +210,10 @@ public class OrderMapper {
 
                     response.setProductId(
                             item.getProductId().getId()
+                    );
+
+                    response.setProductName(
+                            item.getProductId().getName()
                     );
 
                     response.setQuantity(

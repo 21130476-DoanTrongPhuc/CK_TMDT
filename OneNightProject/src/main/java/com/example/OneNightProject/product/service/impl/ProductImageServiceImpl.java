@@ -1,11 +1,15 @@
 package com.example.OneNightProject.product.service.impl;
 
+import com.example.OneNightProject.auth.service.JwtService;
 import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.product.entity.ProductImage;
 import com.example.OneNightProject.product.repository.ProductImageRepository;
 import com.example.OneNightProject.product.repository.ProductRepository;
 import com.example.OneNightProject.product.service.CloudinaryService;
 import com.example.OneNightProject.product.service.ProductImageService;
+import com.example.OneNightProject.user.entity.Users;
+import com.example.OneNightProject.user.enums.CustomerEnum;
+import com.example.OneNightProject.user.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,8 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-
 
 @Service
 @RequiredArgsConstructor
@@ -23,16 +25,19 @@ public class ProductImageServiceImpl implements ProductImageService {
     private final ProductRepository productRepository;
     private final ProductImageRepository imageRepository;
     private final CloudinaryService cloudinaryService;
+    private final CustomerRepository customerRepository;
+    private final JwtService jwtService;
 
     // =========================
     // Upload 1 ảnh
     // =========================
     @Override
-    public ProductImage uploadImage(Long productId, MultipartFile file) {
+    public ProductImage uploadImage(String authHeader, Long productId, MultipartFile file) {
         try{
+            Product product = getSellerProduct(authHeader, productId);
+    public ProductImage uploadImage(Long productId, MultipartFile file) {
+        try {
             validateFile(file);
-
-            Product product = getProduct(productId);
 
             Map uploadResult = cloudinaryService.upload(file);
 
@@ -42,35 +47,21 @@ public class ProductImageServiceImpl implements ProductImageService {
             ProductImage image = ProductImage.builder()
                     .product(product)
                     .imageUrl(imageUrl)
-                    .publicId(publicId)
                     .build();
 
             return imageRepository.save(image);
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    // =========================
-    // Xóa 1 ảnh
-    // =========================
-    @Override
-    public void deleteImage(Long imageId) {
-        ProductImage image = imageRepository.findById(imageId)
-                .orElseThrow(() -> new NoSuchElementException("Image not found: " + imageId));
-        if (image.getPublicId() != null) {
-            cloudinaryService.delete(image.getPublicId());
-        }
-        imageRepository.delete(image);
     }
 
     // =========================
     // Upload nhiều ảnh
     // =========================
     @Override
-    public List<ProductImage> uploadImages(Long productId, MultipartFile[] files) {
+    public List<ProductImage> uploadImages(String authHeader, Long productId, MultipartFile[] files) {
 
-        Product product = getProduct(productId);
+        Product product = getSellerProduct(authHeader, productId);
 
         List<ProductImage> images = new ArrayList<>();
 
@@ -94,11 +85,33 @@ public class ProductImageServiceImpl implements ProductImageService {
     }
 
     // =========================
-    // Helper: get product
+    // Helper: authenticate the seller and enforce product ownership
     // =========================
-    private Product getProduct(Long productId) {
-        return productRepository.findById(productId)
+    private Product getSellerProduct(String authHeader, Long productId) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization header is invalid");
+        }
+
+        String token = authHeader.substring(7);
+        Users seller = customerRepository.findByEmail(jwtService.extractUsername(token));
+
+        if (seller == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        if (seller.getRole() != CustomerEnum.SELLER) {
+            throw new RuntimeException("Only seller can upload product images");
+        }
+
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        if (product.getSeller() == null ||
+                !product.getSeller().getId().equals(seller.getId())) {
+            throw new RuntimeException("You can only upload images to your own product");
+        }
+
+        return product;
     }
 
     // =========================

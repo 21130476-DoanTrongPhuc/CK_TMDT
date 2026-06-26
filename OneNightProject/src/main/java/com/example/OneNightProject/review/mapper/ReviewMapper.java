@@ -15,10 +15,8 @@ public class ReviewMapper {
                 .userId(review.getUser().getId())
                 .userName(review.getUser().getFullName())
                 .productId(review.getProduct().getId())
-                .productName(review.getProduct().getName())
                 .rating(review.getRating())
                 .comment(review.getComment())
-                .status(review.getStatus())
                 .createdAt(review.getCreatedAt())
                 .build();
     }

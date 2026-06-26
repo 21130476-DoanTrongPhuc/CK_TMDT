@@ -17,13 +17,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ---- Types ----
-
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED';
 export type ReviewStatus = 'VISIBLE' | 'HIDDEN';
 export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
+export type PaymentStatusOrder = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
 export type Period = 'day' | 'month' | 'quarter' | 'year';
-export type ProductStatus = 'ACTIVE' | 'OUT_OF_STOCK' | 'DISCONTINUED';
+export type ProductStatus = 'PENDING_APPROVAL' | 'ACTIVE' | 'OUT_OF_STOCK' | 'DISCONTINUED' | 'REJECTED';
 
 export interface ProductImage {
   id: number;
@@ -110,32 +109,54 @@ export interface DashboardData {
   revenueByDay: RevenuePoint[];
 }
 
-// ---- Dashboard ----
+export interface SellerPaymentSummary {
+  totalPayments: number;
+  paidPayments: number;
+  pendingPayments: number;
+  failedPayments: number;
+  refundedPayments: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+
+export interface SellerPayment {
+  paymentId: number;
+  paymentCode: string;
+  orderId: number | null;
+  orderCode: string | null;
+  buyerName: string | null;
+  paymentMethod: 'COD' | 'ONLINE';
+  paymentStatus: PaymentStatus;
+  orderPaymentStatus: 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED';
+  orderStatus: OrderStatus;
+  amount: number;
+  transactionId: string | null;
+  createdAt: string;
+  paidAt: string | null;
+}
 
 export const sellerApi = {
   getDashboard: () => request<DashboardData>('/seller/dashboard'),
   getRevenue: (period: Period) => request<RevenuePoint[]>(`/seller/revenue?period=${period}`),
 };
 
-// ---- Products ----
-
 export const productApi = {
-  list: () => request<Page<Product>>('/seller/products'),
+  list: () => request<Product[]>('/v1/seller/custom-products'),
 
   create: (data: ProductForm) =>
-    request<Product>('/seller/products', {
+    request<Product>('/v1/seller/custom-products', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   update: (id: number, data: ProductForm) =>
-    request<Product>(`/seller/products/${id}`, {
+    request<Product>(`/v1/seller/custom-products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
 
   delete: (id: number) =>
-    fetch(`${BASE_URL}/seller/products/${id}`, {
+    fetch(`${BASE_URL}/v1/seller/custom-products/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${getToken()}` },
     }).then((res) => {
@@ -164,8 +185,6 @@ export const productApi = {
     }),
 };
 
-// ---- Orders ----
-
 export interface Order {
   id: number;
   orderCode: string;
@@ -178,8 +197,66 @@ export interface Order {
   createdAt: string;
 }
 
+export interface OrderItemDetail {
+  id: number;
+  productId: number;
+  productName: string | null;
+  quantity: number;
+  price: number;
+  customized: boolean | null;
+  customizationPrice: number | null;
+  customText: string | null;
+  customNote: string | null;
+  customImage: string | null;
+}
+
+export interface OrderDetail {
+  id: number;
+  orderCode: string;
+  userId: number;
+  totalPrice: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  createdAt: string;
+  items: OrderItemDetail[];
+}
+
+export interface SellerCustomOrder {
+  orderId: number;
+  orderCode: string;
+  buyerName: string | null;
+  customItems: number;
+  customAmount: number;
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatusOrder;
+  createdAt: string;
+}
+
+export interface OrderFilterForm {
+  orderCode?: string;
+  status?: OrderStatus | '';
+  paymentStatus?: PaymentStatus | '';
+  fromDate?: string | null;
+  toDate?: string | null;
+}
+
 export const orderApi = {
-  list: () => request<Order[]>('/seller/orders'),
+  listSellerOrders: (filters: OrderFilterForm = {}, page = 0, size = 10) =>
+    request<Page<Order>>(`/v1/orders/seller-orders?page=${page}&size=${size}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        orderCode: filters.orderCode?.trim() || null,
+        status: filters.status || null,
+        paymentStatus: filters.paymentStatus || null,
+        fromDate: filters.fromDate || null,
+        toDate: filters.toDate || null,
+      }),
+    }),
 
   updateStatus: (id: number, status: OrderStatus) =>
     fetch(`${BASE_URL}/seller/orders/${id}/status`, {
@@ -192,9 +269,13 @@ export const orderApi = {
     }).then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }),
-};
 
-// ---- Admin Reviews ----
+  listSellerCustomOrders: (page = 0, size = 10) =>
+    request<Page<SellerCustomOrder>>(`/v1/seller/custom-orders?page=${page}&size=${size}`),
+
+  getSellerCustomOrderDetail: (orderId: number) =>
+    request<OrderDetail>(`/v1/seller/custom-orders/${orderId}`),
+};
 
 export interface Review {
   id: number;
@@ -232,8 +313,239 @@ export const adminReviewApi = {
     }),
 };
 
-// ---- Categories ----
-
 export const categoryApi = {
   list: () => request<Category[]>('/v1/categories'),
+};
+
+export type PromotionType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
+export interface Promotion {
+  id: number;
+  code: string;
+  name: string;
+  discountType: PromotionType;
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscountAmount: number | null;
+  usageLimit: number | null;
+  usedCount: number;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+  sellerId: number | null;
+  sellerName: string | null;
+  productId: number | null;
+  productName: string | null;
+}
+
+export interface PromotionForm {
+  name: string;
+  code: string;
+  discountType: PromotionType;
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscountAmount: number | null;
+  usageLimit: number | null;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+  productId: number | null;
+}
+
+function toPromotionPayload(data: PromotionForm) {
+  return {
+    ...data,
+    startDate: data.startDate.includes('T') ? data.startDate : `${data.startDate}T00:00:00`,
+    endDate: data.endDate.includes('T') ? data.endDate : `${data.endDate}T23:59:59`,
+  };
+}
+
+export const promotionApi = {
+  list: (page = 0, size = 8) => request<Page<Promotion>>(`/v1/seller/promotions?page=${page}&size=${size}`),
+
+  create: (data: PromotionForm) =>
+    request<Promotion>('/v1/seller/promotions', {
+      method: 'POST',
+      body: JSON.stringify(toPromotionPayload(data)),
+    }),
+
+  update: (id: number, data: PromotionForm) =>
+    request<Promotion>(`/v1/seller/promotions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(toPromotionPayload(data)),
+    }),
+
+  delete: (id: number) =>
+    fetch(`${BASE_URL}/v1/seller/promotions/${id}`, {
+// ---- Admin Dashboard ----
+
+export interface AdminDashboardData {
+  totalUsers: number;
+  totalSellers: number;
+  totalProducts: number;
+  totalOrders: number;
+  revenueThisMonth: number;
+  todayOrders: number;
+  pendingApprovalProducts: number;
+  orderStatusCounts: OrderStatusCount[];
+  recentOrders: RecentOrder[];
+  topProducts: TopProduct[];
+  revenueByDay: RevenuePoint[];
+}
+
+export const adminDashboardApi = {
+  getDashboard: () => request<AdminDashboardData>('/admin/dashboard'),
+  getRevenue: (period: Period) => request<RevenuePoint[]>(`/admin/revenue?period=${period}`),
+};
+
+// ---- Admin Products ----
+
+export const adminProductApi = {
+  list: (params?: { status?: ProductStatus; keyword?: string; page?: number; size?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.keyword) q.set('keyword', params.keyword);
+    q.set('page', String(params?.page ?? 0));
+    q.set('size', String(params?.size ?? 20));
+    return request<Page<Product>>(`/admin/products?${q.toString()}`);
+  },
+  getById: (id: number) => request<Product>(`/admin/products/${id}`),
+  approve: (id: number) =>
+    fetch(`${BASE_URL}/admin/products/${id}/approve`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<Product>;
+    }),
+  reject: (id: number) =>
+    fetch(`${BASE_URL}/admin/products/${id}/reject`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<Product>;
+    }),
+};
+
+// ---- Admin Orders (read-only) ----
+
+export interface AdminOrder {
+  id: number;
+  orderCode: string;
+  totalPrice: number;
+  totalItems: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  receiverName: string;
+  receiverPhone: string;
+  createdAt: string;
+}
+
+export interface AdminOrderDetail {
+  id: number;
+  orderCode: string;
+  userId: number;
+  totalPrice: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  createdAt: string;
+  items: {
+    id: number;
+    productId: number;
+    quantity: number;
+    price: number;
+    customized: boolean;
+    customizationPrice: number | null;
+    customText: string | null;
+    customNote: string | null;
+    customImage: string | null;
+  }[];
+  statusHistories: {
+    oldStatus: string;
+    newStatus: string;
+    changedAt: string;
+  }[];
+}
+
+export const adminOrderApi = {
+  list: (params?: { page?: number; size?: number }) => {
+    const q = new URLSearchParams();
+    q.set('page', String(params?.page ?? 0));
+    q.set('size', String(params?.size ?? 20));
+    return request<Page<AdminOrder>>(`/admin/orders?${q.toString()}`);
+  },
+  getById: (id: number) => request<AdminOrderDetail>(`/admin/orders/${id}`),
+};
+
+// ---- Admin Users (CRUD) ----
+
+export type UserRole = 'USER' | 'ADMIN' | 'SELLER';
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'BANNED';
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserForm {
+  email: string;
+  password?: string;
+  fullName: string;
+  phone: string;
+  role: UserRole;
+  status?: UserStatus;
+}
+
+export const adminUserApi = {
+  list: (params?: { role?: UserRole; status?: UserStatus; keyword?: string; page?: number; size?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.role) q.set('role', params.role);
+    if (params?.status) q.set('status', params.status);
+    if (params?.keyword) q.set('keyword', params.keyword);
+    q.set('page', String(params?.page ?? 0));
+    q.set('size', String(params?.size ?? 20));
+    return request<Page<AdminUser>>(`/admin/users?${q.toString()}`);
+  },
+  getById: (id: number) => request<AdminUser>(`/admin/users/${id}`),
+  create: (data: AdminUserForm) =>
+    request<AdminUser>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id: number, data: AdminUserForm) =>
+    request<AdminUser>(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id: number) =>
+    fetch(`${BASE_URL}/admin/users/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }),
+
+  toggleActive: (id: number, active: boolean) =>
+    request<Promotion>(`/v1/seller/promotions/${id}/active`, {
+      method: 'PATCH',
+      body: JSON.stringify(active),
+    }),
+};
+
+export const paymentApi = {
+  summary: () => request<SellerPaymentSummary>('/v1/seller/payments/summary'),
+  list: (page = 0, size = 10) =>
+    request<Page<SellerPayment>>(`/v1/seller/payments?page=${page}&size=${size}`),
 };

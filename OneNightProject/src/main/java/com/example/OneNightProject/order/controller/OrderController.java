@@ -48,6 +48,23 @@ public class OrderController {
         );
     }
 
+    @PostMapping("/seller-orders")
+    public ResponseEntity<Page<OrderListResponse>>
+    getSellerOrders(
+            @RequestHeader("Authorization")
+            String authHeader,
+            @RequestBody OrderFilterRequest request,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                orderService.getSellerOrders(
+                        authHeader,
+                        request,
+                        pageable
+                )
+        );
+    }
+
     /**
      * Xem đơn hàng chi tiết
      */
