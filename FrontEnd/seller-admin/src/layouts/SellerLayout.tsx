@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
-  ClipboardList,
   Tag,
   CreditCard,
   Star,
@@ -33,6 +32,8 @@ const ADMIN_NAV = [
   { to: '/admin/products', label: 'Duyệt sản phẩm', icon: CheckSquare },
   { to: '/admin/orders', label: 'Đơn hàng', icon: ClipboardList },
   { to: '/admin/users', label: 'Người dùng', icon: Users },
+];
+
 const ADMIN_EXTRA_NAV = [
   { to: '/admin/reviews', label: 'Đánh giá', icon: Star },
 ];
@@ -45,8 +46,7 @@ function SidebarContent({
   onLogout: () => void;
 }) {
   const { user } = useAuth();
-  const navItems = user?.role === 'ADMIN' ? ADMIN_NAV : SELLER_NAV;
-  const navItems = user?.role === 'ADMIN' ? ADMIN_EXTRA_NAV : SELLER_NAV;
+  const navItems = user?.role === 'ADMIN' ? [...ADMIN_NAV, ...ADMIN_EXTRA_NAV] : SELLER_NAV;
 
   return (
     <>
@@ -54,7 +54,6 @@ function SidebarContent({
       <div className="h-16 flex items-center px-5 border-b border-gray-100 shrink-0">
         <Link
           to={user?.role === 'ADMIN' ? '/admin/dashboard' : '/seller/dashboard'}
-          to="/seller/dashboard"
           className="flex items-center gap-2.5"
           onClick={onItemClick}
         >

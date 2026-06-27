@@ -14,7 +14,6 @@ import {
   PieChart as PieChartIcon,
   Trophy,
   Package,
-  AlertTriangle,
 } from 'lucide-react';
 import { adminDashboardApi } from '../../api/sellerApi';
 import type { AdminDashboardData, Period } from '../../api/sellerApi';

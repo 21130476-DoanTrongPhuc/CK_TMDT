@@ -7,36 +7,47 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends
         JpaRepository<Product, Long>,
         JpaSpecificationExecutor<Product> {
-    @Query(
-            """
-                SELECT p FROM Product p 
+
     @Query("""
-                SELECT p FROM Product p
-                WHERE p.id = :idProduct
+            SELECT p
+            FROM Product p
+            WHERE p.id = :idProduct
             """)
-    Product findByProductId(Long idProduct);
+    Product findByProductId(
+            @Param("idProduct") Long idProduct);
 
-    List<Product> findBySeller_IdAndDeleteAtIsNullOrderByCreatedAtDesc(Long sellerId);
+    List<Product> findBySeller_IdAndDeleteAtIsNullOrderByCreatedAtDesc(
+            Long sellerId);
 
-    List<Product> findBySeller_IdAndAllowCustomizationTrueAndDeleteAtIsNullOrderByCreatedAtDesc(Long sellerId);
-    Page<Product> findBySellerIdAndDeleteAtIsNull(Long sellerId, Pageable pageable);
+    List<Product> findBySeller_IdAndAllowCustomizationTrueAndDeleteAtIsNullOrderByCreatedAtDesc(
+            Long sellerId);
 
-    long countByStatus(ProductStatus status);
+    Page<Product> findBySellerIdAndDeleteAtIsNull(
+            Long sellerId,
+            Pageable pageable);
+
+    long countByStatus(
+            ProductStatus status);
 
     @Query("""
-            SELECT p FROM Product p
+            SELECT p
+            FROM Product p
             WHERE p.deleteAt IS NULL
-            AND (:status IS NULL OR p.status = :status)
-            AND (:keyword IS NULL OR p.name LIKE %:keyword% OR p.seller.fullName LIKE %:keyword%)
+              AND (:status IS NULL OR p.status = :status)
+              AND (
+                    :keyword IS NULL
+                    OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(p.seller.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                  )
             ORDER BY p.createdAt DESC
             """)
     Page<Product> findAllForAdmin(

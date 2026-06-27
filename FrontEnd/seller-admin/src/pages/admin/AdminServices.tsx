@@ -76,7 +76,7 @@ export default function AdminServices() {
     try {
       setLoading(true);
       const data = await adminApi.getServices();
-      setServices(data.sort((a, b) => a.id - b.id));
+      setServices(data.sort((a: PetServiceData, b: PetServiceData) => a.id - b.id));
     } catch {
       showToast('Không thể tải danh sách dịch vụ', 'error');
     } finally {

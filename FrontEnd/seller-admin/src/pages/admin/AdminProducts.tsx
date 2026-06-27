@@ -40,12 +40,6 @@ function formatCurrency(val: number) {
   return new Intl.NumberFormat('vi-VN').format(val) + '₫';
 }
 
-function formatDate(iso: string) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
 export default function AdminProducts() {
   const { showToast } = useToast();
 
@@ -239,7 +233,7 @@ export default function AdminProducts() {
                     </td>
                     <td className="px-4 py-3 max-w-[200px]">
                       <p className="font-semibold text-gray-800 line-clamp-2">{p.name}</p>
-                      {p.brand && <p className="text-xs text-gray-400 mt-0.5">{p.brand}</p>}
+                      {p.categoryName && <p className="text-xs text-gray-400 mt-0.5">{p.categoryName}</p>}
                     </td>
                     <td className="px-4 py-3 text-gray-600 font-medium">
                       {p.sellerName || '—'}

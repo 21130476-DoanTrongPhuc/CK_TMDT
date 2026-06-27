@@ -97,10 +97,10 @@ export default function AdminAppointments() {
       const first = items[0];
 
       // Services lấy từ appointment đầu tiên (tất cả pets cùng booking có cùng services)
-      const services = first.services.map((s) => ({ title: s.title, price: s.price }));
+      const services = first.services.map((s: { title: string; price: number }) => ({ title: s.title, price: s.price }));
 
       // Tổng = giá các dịch vụ × số pet
-      const totalPrice = services.reduce((sum, s) => sum + s.price, 0) * items.length;
+      const totalPrice = services.reduce((sum: number, s: { title: string; price: number }) => sum + s.price, 0) * items.length;
 
       return {
         bookingCode,
@@ -146,7 +146,7 @@ export default function AdminAppointments() {
         : await adminApi.assignDoctor(representativeId, Number(value));
       // Merge toàn bộ appointments được cập nhật vào state theo id
       setAppointments((prev) => {
-        const updatedMap = new Map(updatedList.map((a) => [a.id, a]));
+        const updatedMap = new Map<number, AdminAppointment>(updatedList.map((a: AdminAppointment) => [a.id, a]));
         return prev.map((a) => updatedMap.get(a.id) ?? a);
       });
     } catch (err) {
@@ -161,7 +161,7 @@ export default function AdminAppointments() {
     try {
       const updatedList = await adminApi.updateStatus(representativeId, status);
       setAppointments((prev) => {
-        const updatedMap = new Map(updatedList.map((a) => [a.id, a]));
+        const updatedMap = new Map<number, AdminAppointment>(updatedList.map((a: AdminAppointment) => [a.id, a]));
         return prev.map((a) => updatedMap.get(a.id) ?? a);
       });
     } catch (err) {

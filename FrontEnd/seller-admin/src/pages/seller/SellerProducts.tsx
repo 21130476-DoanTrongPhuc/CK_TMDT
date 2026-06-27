@@ -5,15 +5,19 @@ import type { Product, ProductForm, ProductImage, Category, ProductStatus } from
 import { useToast } from '../../contexts/ToastContext';
 
 const STATUS_LABEL: Record<ProductStatus, string> = {
+  PENDING_APPROVAL: 'Chờ duyệt',
   ACTIVE: 'Đang bán',
   OUT_OF_STOCK: 'Hết hàng',
   DISCONTINUED: 'Ngừng bán',
+  REJECTED: 'Đã từ chối',
 };
 
 const STATUS_CLASS: Record<ProductStatus, string> = {
+  PENDING_APPROVAL: 'bg-amber-100 text-amber-700',
   ACTIVE: 'bg-green-100 text-green-700',
   OUT_OF_STOCK: 'bg-yellow-100 text-yellow-700',
   DISCONTINUED: 'bg-gray-100 text-gray-500',
+  REJECTED: 'bg-rose-100 text-rose-700',
 };
 
 const EMPTY_FORM: ProductForm = {

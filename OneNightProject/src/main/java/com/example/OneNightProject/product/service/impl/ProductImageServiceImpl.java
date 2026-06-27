@@ -32,17 +32,20 @@ public class ProductImageServiceImpl implements ProductImageService {
     // Upload 1 ảnh
     // =========================
     @Override
-    public ProductImage uploadImage(String authHeader, Long productId, MultipartFile file) {
-        try{
-            Product product = getSellerProduct(authHeader, productId);
-    public ProductImage uploadImage(Long productId, MultipartFile file) {
+    public ProductImage uploadImage(
+            String authHeader,
+            Long productId,
+            MultipartFile file) {
+
         try {
+
+            Product product = getSellerProduct(authHeader, productId);
+
             validateFile(file);
 
             Map uploadResult = cloudinaryService.upload(file);
 
             String imageUrl = uploadResult.get("secure_url").toString();
-            String publicId = uploadResult.get("public_id").toString();
 
             ProductImage image = ProductImage.builder()
                     .product(product)
@@ -50,6 +53,7 @@ public class ProductImageServiceImpl implements ProductImageService {
                     .build();
 
             return imageRepository.save(image);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -59,7 +63,10 @@ public class ProductImageServiceImpl implements ProductImageService {
     // Upload nhiều ảnh
     // =========================
     @Override
-    public List<ProductImage> uploadImages(String authHeader, Long productId, MultipartFile[] files) {
+    public List<ProductImage> uploadImages(
+            String authHeader,
+            Long productId,
+            MultipartFile[] files) {
 
         Product product = getSellerProduct(authHeader, productId);
 
@@ -85,15 +92,20 @@ public class ProductImageServiceImpl implements ProductImageService {
     }
 
     // =========================
-    // Helper: authenticate the seller and enforce product ownership
+    // Authenticate seller & check ownership
     // =========================
-    private Product getSellerProduct(String authHeader, Long productId) {
+    private Product getSellerProduct(
+            String authHeader,
+            Long productId) {
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Authorization header is invalid");
         }
 
         String token = authHeader.substring(7);
-        Users seller = customerRepository.findByEmail(jwtService.extractUsername(token));
+
+        Users seller = customerRepository.findByEmail(
+                jwtService.extractUsername(token));
 
         if (seller == null) {
             throw new RuntimeException("User not found");
@@ -104,18 +116,21 @@ public class ProductImageServiceImpl implements ProductImageService {
         }
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("Product not found"));
 
-        if (product.getSeller() == null ||
-                !product.getSeller().getId().equals(seller.getId())) {
-            throw new RuntimeException("You can only upload images to your own product");
+        if (product.getSeller() == null
+                || !product.getSeller().getId().equals(seller.getId())) {
+
+            throw new RuntimeException(
+                    "You can only upload images to your own product");
         }
 
         return product;
     }
 
     // =========================
-    // Helper: validate file
+    // Validate file
     // =========================
     private void validateFile(MultipartFile file) {
 
@@ -127,8 +142,9 @@ public class ProductImageServiceImpl implements ProductImageService {
             throw new RuntimeException("File too large (max 5MB)");
         }
 
-        if (file.getContentType() == null ||
-                !file.getContentType().startsWith("image/")) {
+        if (file.getContentType() == null
+                || !file.getContentType().startsWith("image/")) {
+
             throw new RuntimeException("Invalid file type");
         }
     }

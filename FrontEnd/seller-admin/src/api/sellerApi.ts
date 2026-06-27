@@ -377,6 +377,19 @@ export const promotionApi = {
 
   delete: (id: number) =>
     fetch(`${BASE_URL}/v1/seller/promotions/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }),
+
+  toggleActive: (id: number, active: boolean) =>
+    request<Promotion>(`/v1/seller/promotions/${id}/active`, {
+      method: 'PATCH',
+      body: JSON.stringify({ active }),
+    }),
+};
+
 // ---- Admin Dashboard ----
 
 export interface AdminDashboardData {
@@ -535,12 +548,6 @@ export const adminUserApi = {
       headers: { Authorization: `Bearer ${getToken()}` },
     }).then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    }),
-
-  toggleActive: (id: number, active: boolean) =>
-    request<Promotion>(`/v1/seller/promotions/${id}/active`, {
-      method: 'PATCH',
-      body: JSON.stringify(active),
     }),
 };
 

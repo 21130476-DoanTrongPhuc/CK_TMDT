@@ -8,7 +8,6 @@ import com.example.OneNightProject.product.repository.ProductImageRepository;
 import com.example.OneNightProject.product.service.ProductImageService;
 import com.example.OneNightProject.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,12 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/products")
 @CrossOrigin(origins = "*")
 public class ProductController {
-    @Autowired
-    private ProductService productService;
-    @Autowired
-    private ProductImageService productImageService;
-    @Autowired
-    private ProductImageRepository imageRepository;
+
+    private final ProductService productService;
+    private final ProductImageService productImageService;
+    private final ProductImageRepository imageRepository;
 
     /**
      * Phân trang sản phẩm
@@ -41,48 +38,65 @@ public class ProductController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "true") boolean ascending) {
-        Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ProductResponse> paginate = productService.findAll(pageable);
-        return ResponseEntity.ok(paginate);
 
+        Sort sort = ascending
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return ResponseEntity.ok(
+                productService.findAll(pageable));
     }
 
     /**
      * Tìm sản phẩm theo ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.getById(id));
+    public ResponseEntity<ProductResponse> getById(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                productService.getById(id));
     }
 
     /**
      * Tạo sản phẩm
      */
     @PostMapping
-    public ResponseEntity<ProductResponse> create(@RequestBody ProductRequest request) {
-        return ResponseEntity.ok(productService.create(request));
+    public ResponseEntity<ProductResponse> create(
+            @RequestBody ProductRequest request) {
+
+        return ResponseEntity.ok(
+                productService.create(request));
     }
 
     /**
-     * Sửa sản phẩm
+     * Cập nhật sản phẩm
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> update(@PathVariable Long id, @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(productService.update(id, request));
+    public ResponseEntity<ProductResponse> update(
+            @PathVariable Long id,
+            @RequestBody ProductRequest request) {
+
+        return ResponseEntity.ok(
+                productService.update(id, request));
     }
 
     /**
-     * Xóa sảm phẩm
+     * Xóa sản phẩm
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id) {
+
         productService.delete(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+        return ResponseEntity.noContent().build();
     }
 
     /**
-     * Tìm kiếm sản phẩm và lọc sản phẩm
+     * Lọc sản phẩm
      */
     @PostMapping("/filter")
     public ResponseEntity<Page<ProductResponse>> filterProducts(
@@ -96,37 +110,42 @@ public class ProductController {
     }
 
     /**
-     * Thêm ảnh vào sản phẩm
+     * Upload 1 ảnh cho sản phẩm
      */
-    @PostMapping(value = "/upload/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+            value = "/upload/{productId}/images",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProductImage upload(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long productId,
-            @RequestParam("file") MultipartFile file
-    ) {
-        return productImageService.uploadImage(authHeader, productId, file);
             @RequestParam("file") MultipartFile file) {
-        return productImageService.uploadImage(productId, file);
+
+        return productImageService.uploadImage(
+                authHeader,
+                productId,
+                file);
     }
 
     /**
-     * Lấy danh sách ảnh của product theo ID
+     * Lấy danh sách ảnh của sản phẩm
      */
-    @GetMapping("getImage/{productId}")
+    @GetMapping("/getImage/{productId}")
     public ResponseEntity<?> getImages(
             @PathVariable Long productId) {
 
         return ResponseEntity.ok(
-                imageRepository.findByProductId(
-                        productId));
+                imageRepository.findByProductId(productId));
     }
 
     /**
-     * Xóa ảnh theo imageId
+     * Xóa ảnh
      */
     @DeleteMapping("/images/{imageId}")
-    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
-        productImageService.deleteImage(imageId);
+    public ResponseEntity<Void> deleteImage(
+            @PathVariable Long imageId) {
+
+//        productImageService.deleteImage(imageId);
+
         return ResponseEntity.noContent().build();
     }
 }
