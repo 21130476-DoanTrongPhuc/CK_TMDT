@@ -36,7 +36,13 @@ export default function SellerProducts() {
   const { showToast } = useToast();
 
   // all products fetched from server
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Page<Product>>({
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: 10,
+  });
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -78,6 +84,7 @@ export default function SellerProducts() {
     try {
       const res = await productApi.list();
       setAllProducts(res);
+
     } catch {
       showToast('Không thể tải danh sách sản phẩm', 'error');
     } finally {
@@ -85,13 +92,23 @@ export default function SellerProducts() {
     }
   }
 
+  console.log(allProducts.content);
+
   // client-side filter
-  const filtered = allProducts.filter((p) => {
-    if (keyword && !p.name.toLowerCase().includes(keyword.toLowerCase())) return false;
-    if (statusFilter && p.status !== statusFilter) return false;
-    if (categoryFilter !== null && p.categoryId !== categoryFilter) return false;
+  const filtered = allProducts.content.filter((p) => {
+    if (keyword && !p.name.toLowerCase().includes(keyword.toLowerCase()))
+      return false;
+
+    if (statusFilter && p.status !== statusFilter)
+      return false;
+
+    if (categoryFilter !== null && p.categoryId !== categoryFilter)
+      return false;
+
     return true;
   });
+
+
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const currentPage = Math.min(page, Math.max(0, totalPages - 1));
