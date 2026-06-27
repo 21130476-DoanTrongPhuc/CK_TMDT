@@ -16,6 +16,23 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long>,
         JpaSpecificationExecutor<Order> {
 
+    @Query("""
+                        SELECT DISTINCT o FROM Order o
+                        JOIN o.orderItems oi
+                        WHERE oi.productId.seller.id = :sellerId
+                        AND o.deletedAt IS NULL
+                        ORDER BY o.createdAt DESC
+                        """)
+    List<Order> findAllBySellerId(@Param("sellerId") Long sellerId);
+
+    @Query("""
+                        SELECT COUNT(o) > 0 FROM Order o
+                        JOIN o.orderItems oi
+                        WHERE o.id = :orderId
+                        AND oi.productId.seller.id = :sellerId
+                        """)
+    boolean existsByIdAndSellerId(@Param("orderId") Long orderId, @Param("sellerId") Long sellerId);
+
     boolean existsByStatus(
             OrderStatus status
     );

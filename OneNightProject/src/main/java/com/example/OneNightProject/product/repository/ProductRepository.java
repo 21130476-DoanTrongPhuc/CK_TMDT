@@ -25,6 +25,9 @@ public interface ProductRepository extends
     Product findByProductId(
             @Param("idProduct") Long idProduct);
 
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.id = :sellerId")
+    long countBySellerId(@Param("sellerId") Long sellerId);
+
     List<Product> findBySeller_IdAndDeleteAtIsNullOrderByCreatedAtDesc(
             Long sellerId);
 
