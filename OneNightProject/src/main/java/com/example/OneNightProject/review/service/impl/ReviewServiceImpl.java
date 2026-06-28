@@ -306,4 +306,26 @@ public class ReviewServiceImpl implements ReviewService {
     public void showReview(Long reviewId) {
 
     }
+
+    @Override
+    public ReviewResponse getReviewUser(String authHeader, Long productId) {
+        String token = authHeader.substring(7);
+
+        Users user = userRepository.findByEmail(
+                jwtService.extractUsername(token)
+        );
+
+        Review review = reviewRepository.findByUser_IdAndProduct_Id(user.getId(),productId);
+
+        return ReviewResponse.builder()
+                .id(review.getId())
+                .userId(review.getUser().getId())
+                .userName(review.getUser().getFullName())
+                .productId(review.getProduct().getId())
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .status(review.getStatus())
+                .createdAt(review.getCreatedAt())
+                .build();
+    }
 }

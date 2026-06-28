@@ -13,6 +13,298 @@ const params =
 const currentProductId =
     params.get("id");
 
+function getStoredUser() {
+
+    const storageKeys = [
+        "user",
+        "currentUser",
+        "current_user",
+        "account",
+        "authUser"
+    ];
+
+    for (const key of storageKeys) {
+
+        const rawValue =
+            localStorage.getItem(key);
+
+        if (!rawValue) {
+            continue;
+        }
+
+        try {
+
+            const parsedValue =
+                JSON.parse(rawValue);
+
+            if (
+                parsedValue &&
+                typeof parsedValue === "object"
+            ) {
+
+                return parsedValue;
+
+            }
+
+        } catch (e) {
+            // ignore and continue
+        }
+
+    }
+
+    const token =
+        localStorage.getItem("accessToken");
+
+    if (!token) {
+        return null;
+    }
+
+    try {
+
+        const base64Payload =
+            token.split(".")[1];
+
+        const decodedPayload =
+            JSON.parse(
+                atob(base64Payload)
+            );
+
+        return decodedPayload;
+
+    } catch (e) {
+
+        return null;
+
+    }
+
+}
+
+function getUserId(user) {
+
+    if (!user || typeof user !== "object") {
+        return null;
+    }
+
+    const possibleKeys = [
+        "id",
+        "userId",
+        "user_id",
+        "_id",
+        "sub"
+    ];
+
+    for (const key of possibleKeys) {
+
+        if (user[key] != null) {
+            return String(user[key]);
+        }
+
+    }
+
+    return null;
+
+}
+
+function getUserIdentityValues(user) {
+
+    if (!user || typeof user !== "object") {
+        return [];
+    }
+
+    const values = [];
+
+    const possibleKeys = [
+        "id",
+        "userId",
+        "user_id",
+        "_id",
+        "sub",
+        "email",
+        "username",
+        "userName",
+        "name"
+    ];
+
+    for (const key of possibleKeys) {
+
+        if (user[key] != null) {
+            const value = String(user[key]).trim().toLowerCase();
+
+            if (value) {
+                values.push(value);
+            }
+        }
+
+    }
+
+    return values;
+
+}
+
+function getReviewIdentityValues(review) {
+
+    if (!review || typeof review !== "object") {
+        return [];
+    }
+
+    const values = [];
+
+    const candidates = [
+        review.userId,
+        review.user_id,
+        review.id,
+        review._id,
+        review.userName,
+        review.username,
+        review.email,
+        review.name,
+        review.user?.id,
+        review.user?.userId,
+        review.user?.user_id,
+        review.user?.username,
+        review.user?.userName,
+        review.user?.email,
+        review.user?.name,
+        review.author?.id,
+        review.author?.userId,
+        review.author?.user_id,
+        review.author?.username,
+        review.author?.userName,
+        review.author?.email,
+        review.author?.name
+    ];
+
+    candidates.forEach((value) => {
+
+        if (value != null) {
+            const normalized = String(value).trim().toLowerCase();
+
+            if (normalized) {
+                values.push(normalized);
+            }
+        }
+
+    });
+
+    return values;
+
+}
+
+function getCurrentUserId() {
+
+    const storedUser = getStoredUser();
+
+    return getUserId(storedUser);
+
+}
+
+function getReviewOwnerId(review) {
+
+    if (!review || typeof review !== "object") {
+        return null;
+    }
+
+    if (review.userId != null) {
+        return String(review.userId);
+    }
+
+    if (review.user_id != null) {
+        return String(review.user_id);
+    }
+
+    if (review.user && typeof review.user === "object") {
+
+        const nestedUserId =
+            getUserId(review.user);
+
+        if (nestedUserId) {
+            return nestedUserId;
+        }
+
+    }
+
+    if (review.author && typeof review.author === "object") {
+
+        const authorId =
+            getUserId(review.author);
+
+        if (authorId) {
+            return authorId;
+        }
+
+    }
+
+    return null;
+
+}
+
+function reviewBelongsToCurrentUser(review) {
+
+    const currentUserId = getCurrentUserId();
+
+    if (currentUserId) {
+        const reviewOwnerId = getReviewOwnerId(review);
+
+        if (reviewOwnerId) {
+            return String(currentUserId) === String(reviewOwnerId);
+        }
+    }
+
+    const currentUserValues = getUserIdentityValues(getStoredUser());
+    const reviewValues = getReviewIdentityValues(review);
+
+    return reviewValues.some((value) => currentUserValues.includes(value));
+
+}
+
+async function findCurrentUserReview() {
+
+    if (!currentProductId) {
+        return null;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `http://localhost:8081/api/v1/reviews/product/${currentProductId}/me`,
+                {
+
+                    method: "GET",
+
+                        headers: {
+
+                    "Content-Type":
+                    "application/json",
+
+                        Authorization:
+                    `Bearer ${token}`
+
+                },
+
+                }
+
+            );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const pageData = await response.json();
+
+        console.log(pageData);
+
+        return (
+            pageData);
+
+    } catch (e) {
+
+        return null;
+
+    }
+
+}
+
 // =========================
 // INIT
 // =========================
@@ -101,20 +393,29 @@ async function loadProductRating() {
         const response =
             await fetch(
                 `${REVIEW_API}/product/${currentProductId}/rating`
-);
+            );
 
-if (!response.ok) {
+        if (!response.ok) {
 
-    throw new Error();
+            throw new Error();
 
-}
+        }
 
-const rating =
-    await response.json();
+        const rating =
+            await response.json();
 
-document.getElementById(
-    "rating-summary"
-).innerHTML = `
+        const ratingSummary =
+            document.getElementById(
+                "rating-summary"
+            );
+
+        if (!ratingSummary) {
+
+            return;
+
+        }
+
+        ratingSummary.innerHTML = `
 
             <div class="card border-0 bg-light">
 
@@ -123,24 +424,24 @@ document.getElementById(
                     <h2 class="mb-2">
 
                         ${
-    rating.averageRating
-        ? rating.averageRating.toFixed(1)
-        : "0.0"
-}
+            rating.averageRating
+                ? rating.averageRating.toFixed(1)
+                : "0.0"
+        }
 
                     </h2>
 
                     ${renderStars(
-    Math.round(
-        rating.averageRating || 0
-    )
-)}
+            Math.round(
+                rating.averageRating || 0
+            )
+        )}
 
                     <div class="mt-2 text-muted">
 
                         ${
-    rating.totalReviews || 0
-} reviews
+            rating.totalReviews || 0
+        } reviews
 
                     </div>
 
@@ -150,14 +451,14 @@ document.getElementById(
 
         `;
 
-} catch (e) {
+    } catch (e) {
 
-    console.error(
-        "Load rating error",
-        e
-    );
+        console.error(
+            "Load rating error",
+            e
+        );
 
-}
+    }
 
 }
 
@@ -166,7 +467,8 @@ document.getElementById(
 // =========================
 
 async function loadReviews(
-    page = 0
+    page = 0,
+    onLoaded = null
 ) {
 
     try {
@@ -217,6 +519,15 @@ async function loadReviews(
         renderReviewPagination(
             pageData
         );
+
+        if (typeof onLoaded === "function") {
+
+            onLoaded(
+                pageData.content || [],
+                pageData
+            );
+
+        }
 
     } catch (e) {
 
@@ -489,6 +800,25 @@ async function submitReview(e) {
 
         };
 
+        const existingReview =
+            await findCurrentUserReview();
+
+        if (existingReview) {
+
+            editReview(
+                existingReview.id,
+                existingReview.rating,
+                existingReview.comment || ""
+            );
+
+            alert(
+                "Bạn đã đăng review cho sản phẩm này rồi. Đang mở chế độ chỉnh sửa."
+            );
+
+            return;
+
+        }
+
         const response =
             await fetch(
                 REVIEW_API,
@@ -512,15 +842,60 @@ async function submitReview(e) {
                 }
             );
 
-        const result =
-            await response.json();
+        let result = {};
+
+        try {
+
+            result =
+                await response.json();
+
+        } catch (e) {
+
+            result = {};
+
+        }
 
         if (!response.ok) {
 
-            alert(
+            const message =
                 result.message ||
-                "Review failed"
-            );
+                "Review failed";
+
+            const isDuplicateReview =
+                response.status === 409 ||
+                /already|exist|reviewed/i.test(message);
+
+
+            if (isDuplicateReview) {
+
+                const existingReview =
+                    await findCurrentUserReview();
+
+                if (existingReview) {
+
+                    editReview(
+                        existingReview.id,
+                        existingReview.rating,
+                        existingReview.comment || ""
+                    );
+
+                    alert(
+                        "Bạn đã đăng review cho sản phẩm này rồi. Đang mở chế độ chỉnh sửa."
+                    );
+
+                } else {
+
+                    alert(
+                        "Bạn đã đăng review cho sản phẩm này rồi."
+                    );
+
+                }
+
+                return;
+
+            }
+
+            alert(message);
 
             return;
 
@@ -561,15 +936,7 @@ function renderReviewActions(
     safeComment
 ) {
 
-    const currentUser =
-        JSON.parse(
-            localStorage.getItem("user")
-        );
-
-    if (
-        !currentUser ||
-        currentUser.id !== review.userId
-    ) {
+    if (!reviewBelongsToCurrentUser(review)) {
 
         return "";
 
@@ -580,24 +947,24 @@ function renderReviewActions(
 <div class="mt-2">
 
     <button
-class="btn btn-sm btn-warning mr-2"
-onclick='editReview(
-${review.id},
-${review.rating},
-${safeComment}
-)'>
+        class="btn btn-sm btn-warning mr-2"
+        onclick='editReview(
+            ${review.id},
+            ${review.rating},
+            ${safeComment}
+        )'>
 
-Edit
+        Edit
 
-</button>
+    </button>
 
-<button
-    class="btn btn-sm btn-danger"
-    onclick="deleteReview(${review.id})">
+    <button
+        class="btn btn-sm btn-danger"
+        onclick="deleteReview(${review.id})">
 
-    Delete
+        Delete
 
-</button>
+    </button>
 
 </div>
 
@@ -614,6 +981,7 @@ function editReview(
     rating,
     comment
 ) {
+
 
     editingReviewId = id;
 
@@ -635,8 +1003,8 @@ function editReview(
             "cancel-edit-review"
         )
         .classList.remove(
-            "d-none"
-        );
+        "d-none"
+    );
 
     document
         .getElementById(
@@ -683,54 +1051,54 @@ async function updateReview() {
         const response =
             await fetch(
                 `${REVIEW_API}/${editingReviewId}`,
-{
+                {
 
-    method:
-        "PUT",
+                    method:
+                        "PUT",
 
-            headers: {
+                    headers: {
 
-    "Content-Type":
-    "application/json",
+                        "Content-Type":
+                            "application/json",
 
-        Authorization:
-    `Bearer ${token}`
+                        Authorization:
+                            `Bearer ${token}`
 
-},
+                    },
 
-    body:
-        JSON.stringify(body)
+                    body:
+                        JSON.stringify(body)
 
-}
-);
+                }
+            );
 
-if (!response.ok) {
+        if (!response.ok) {
 
-    throw new Error();
+            throw new Error();
 
-}
+        }
 
-alert(
-    "Review updated successfully"
-);
+        alert(
+            "Review updated successfully"
+        );
 
-cancelEditReview();
+        cancelEditReview();
 
-loadProductRating();
+        loadProductRating();
 
-loadReviews(
-    currentReviewPage
-);
+        loadReviews(
+            currentReviewPage
+        );
 
-} catch (e) {
+    } catch (e) {
 
-    console.error(e);
+        console.error(e);
 
-    alert(
-        "Update review failed"
-    );
+        alert(
+            "Update review failed"
+        );
 
-}
+    }
 
 }
 

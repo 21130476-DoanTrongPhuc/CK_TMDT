@@ -157,4 +157,21 @@ public class ReviewController {
                 )
         );
     }
+
+    /**
+     *ấy review của sản phẩm cụ thể từ user
+     */
+    @GetMapping("/product/{productId}/me")
+    public ResponseEntity<ReviewResponse> getReviewUser(
+            @RequestHeader("Authorization")
+            String authHeader,
+            @PathVariable Long productId){
+
+        return ResponseEntity.ok(
+                reviewService.getReviewUser(
+                        authHeader,
+                        productId
+                )
+        );
+    }
 }

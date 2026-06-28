@@ -44,4 +44,6 @@ public interface ReviewService {
     void hideReview(Long reviewId);
 
     void showReview(Long reviewId);
+
+    ReviewResponse getReviewUser(String authHeader, Long productId);
 }
