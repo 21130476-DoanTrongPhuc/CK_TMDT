@@ -1,8 +1,11 @@
+
 const REVIEW_API =
     "http://localhost:8081/api/v1/reviews";
 
 let currentReviewPage = 0;
 const reviewPageSize = 5;
+
+let editingReviewId = null;
 
 const params =
     new URLSearchParams(window.location.search);
@@ -10,12 +13,20 @@ const params =
 const currentProductId =
     params.get("id");
 
+// =========================
+// INIT
+// =========================
+
 document.addEventListener(
     "DOMContentLoaded",
     () => {
 
         if (!currentProductId) {
-            console.error("Product ID not found");
+
+            console.error(
+                "Product ID not found"
+            );
+
             return;
         }
 
@@ -25,8 +36,10 @@ document.addEventListener(
             );
 
         if (hiddenProductId) {
+
             hiddenProductId.value =
                 currentProductId;
+
         }
 
         loadProductRating();
@@ -39,37 +52,47 @@ document.addEventListener(
             );
 
         if (reviewForm) {
+
             reviewForm.addEventListener(
                 "submit",
                 submitReview
             );
+
         }
 
-        const sortSelect =
-            document.getElementById(
+        document
+            .getElementById(
                 "sort-reviews"
-            );
-
-        if (sortSelect) {
-            sortSelect.addEventListener(
+            )
+            ?.addEventListener(
                 "change",
                 () => loadReviews(0)
             );
-        }
 
-        const ratingFilter =
-            document.getElementById(
+        document
+            .getElementById(
                 "filter-rating"
-            );
-
-        if (ratingFilter) {
-            ratingFilter.addEventListener(
+            )
+            ?.addEventListener(
                 "change",
                 () => loadReviews(0)
             );
-        }
+
+        document
+            .getElementById(
+                "cancel-edit-review"
+            )
+            ?.addEventListener(
+                "click",
+                cancelEditReview
+            );
+
     }
 );
+
+// =========================
+// LOAD RATING
+// =========================
 
 async function loadProductRating() {
 
@@ -78,34 +101,48 @@ async function loadProductRating() {
         const response =
             await fetch(
                 `${REVIEW_API}/product/${currentProductId}/rating`
-            );
+);
 
-        if (!response.ok) {
-            throw new Error();
-        }
+if (!response.ok) {
 
-        const rating =
-            await response.json();
+    throw new Error();
 
-        document.getElementById(
-            "rating-summary"
-        ).innerHTML = `
+}
+
+const rating =
+    await response.json();
+
+document.getElementById(
+    "rating-summary"
+).innerHTML = `
 
             <div class="card border-0 bg-light">
 
-                <div class="card-body">
+                <div class="card-body text-center">
 
-                    <h4 class="mb-1">
-                        ${rating.averageRating
-            ? rating.averageRating.toFixed(1)
-            : "0.0"}
-                        / 5
-                    </h4>
+                    <h2 class="mb-2">
 
-                    <small class="text-muted">
-                        ${rating.totalReviews || 0}
-                        reviews
-                    </small>
+                        ${
+    rating.averageRating
+        ? rating.averageRating.toFixed(1)
+        : "0.0"
+}
+
+                    </h2>
+
+                    ${renderStars(
+    Math.round(
+        rating.averageRating || 0
+    )
+)}
+
+                    <div class="mt-2 text-muted">
+
+                        ${
+    rating.totalReviews || 0
+} reviews
+
+                    </div>
 
                 </div>
 
@@ -113,17 +150,24 @@ async function loadProductRating() {
 
         `;
 
-    } catch (e) {
+} catch (e) {
 
-        console.error(
-            "Load rating error",
-            e
-        );
+    console.error(
+        "Load rating error",
+        e
+    );
 
-    }
 }
 
-async function loadReviews(page = 0) {
+}
+
+// =========================
+// LOAD REVIEWS
+// =========================
+
+async function loadReviews(
+    page = 0
+) {
 
     try {
 
@@ -144,25 +188,27 @@ async function loadReviews(page = 0) {
             `&sortType=${sortType}`;
 
         if (rating) {
+
             url += `&rating=${rating}`;
+
         }
 
         const response =
             await fetch(url);
 
         if (!response.ok) {
+
             throw new Error(
                 "Cannot load reviews"
             );
+
         }
 
         const pageData =
             await response.json();
 
-        console.log(
-            "Review page:",
-            pageData
-        );
+        currentReviewPage =
+            pageData.number;
 
         renderReviews(
             pageData.content || []
@@ -172,8 +218,6 @@ async function loadReviews(page = 0) {
             pageData
         );
 
-        currentReviewPage = page;
-
     } catch (e) {
 
         console.error(
@@ -182,9 +226,16 @@ async function loadReviews(page = 0) {
         );
 
     }
+
 }
 
-function renderReviews(reviews) {
+// =========================
+// RENDER REVIEWS
+// =========================
+
+function renderReviews(
+    reviews
+) {
 
     const container =
         document.getElementById(
@@ -192,7 +243,9 @@ function renderReviews(reviews) {
         );
 
     if (!container) {
+
         return;
+
     }
 
     if (!reviews.length) {
@@ -201,82 +254,99 @@ function renderReviews(reviews) {
 
             <div class="alert alert-info">
 
-                No reviews yet
+                No reviews yet.
 
             </div>
 
         `;
 
         return;
+
     }
 
     container.innerHTML =
-        reviews.map(review => `
+        reviews.map(review => {
 
-            <div
-                class="product-review pb-4 mb-4 border-bottom">
+            const safeComment =
+                JSON.stringify(
+                    review.comment || ""
+                );
 
-                <div class="d-flex mb-3">
+            return `
 
-                    <div
-                        class="media media-ie-fix
-                        align-items-center
-                        mr-4 pr-2">
+                <div class="product-review pb-4 mb-4 border-bottom">
 
-                        <img
-                            class="rounded-circle"
-                            width="50"
-                            src="img/default-avatar.png"
-                            alt="Avatar">
+                    <div class="d-flex justify-content-between">
 
-                        <div class="media-body pl-3">
+                        <div class="media">
 
-                            <h6
-                                class="font-size-sm mb-0">
+                            <img
+                                class="rounded-circle"
+                                width="50"
+                                src="img/default-avatar.png">
 
-                                ${review.userName || "Anonymous User"}
+                            <div class="media-body pl-3">
 
-                            </h6>
+                                <h6 class="mb-1">
 
-                            <span
-                                class="font-size-ms text-muted">
+                                    ${
+                review.userName ||
+                "Anonymous User"
+            }
 
-                                ${formatDate(
-            review.createdAt
-        )}
+                                </h6>
 
-                            </span>
+                                <small class="text-muted">
+
+                                    ${formatDate(
+                review.createdAt
+            )}
+
+                                </small>
+
+                                <div class="mt-1">
+
+                                    ${renderStars(
+                review.rating
+            )}
+
+                                </div>
+
+                            </div>
 
                         </div>
 
                     </div>
 
-                    <div>
+                    <p class="mt-3 mb-2">
 
-                        ${renderStars(
-            review.rating
-        )}
+                        ${
+                review.comment ||
+                ""
+            }
 
-                    </div>
+                    </p>
+
+                    ${renderReviewActions(
+                review,
+                safeComment
+            )}
 
                 </div>
 
-                <p class="font-size-md mb-2">
+            `;
 
-                    ${review.comment || ""}
+        }).join("");
 
-                </p>
-
-                ${renderReviewActions(
-            review
-        )}
-
-            </div>
-
-        `).join("");
 }
 
-function renderStars(rating) {
+// =========================
+// STARS
+// =========================
+
+function renderStars(
+    rating
+) {
 
     let html =
         `<div class="star-rating">`;
@@ -287,15 +357,30 @@ function renderStars(rating) {
         i++
     ) {
 
-        html += i <= rating
-            ? `<i class="sr-star czi-star-filled active"></i>`
-            : `<i class="sr-star czi-star"></i>`;
+        html +=
+
+            i <= rating
+
+                ?
+
+                `<i class="sr-star czi-star-filled active"></i>`
+
+                :
+
+                `<i class="sr-star czi-star"></i>`;
+
     }
 
-    html += `</div>`;
+    html +=
+        `</div>`;
 
     return html;
+
 }
+
+// =========================
+// PAGINATION
+// =========================
 
 function renderReviewPagination(
     pageData
@@ -307,13 +392,19 @@ function renderReviewPagination(
         );
 
     if (!container) {
+
         return;
+
     }
 
     container.innerHTML = "";
 
-    if (pageData.totalPages <= 1) {
+    if (
+        pageData.totalPages <= 1
+    ) {
+
         return;
+
     }
 
     for (
@@ -325,14 +416,16 @@ function renderReviewPagination(
         container.innerHTML += `
 
             <li class="page-item
-                ${i === pageData.number
-            ? "active"
-            : ""}">
+                ${
+            i === pageData.number
+                ? "active"
+                : ""
+        }">
 
                 <a
                     class="page-link"
                     href="#"
-                    onclick="loadReviews(${i}); return false;">
+                    onclick="loadReviews(${i});return false;">
 
                     ${i + 1}
 
@@ -341,12 +434,24 @@ function renderReviewPagination(
             </li>
 
         `;
+
     }
+
 }
+
+// =========================
+// SUBMIT REVIEW
+// =========================
 
 async function submitReview(e) {
 
     e.preventDefault();
+
+    if (editingReviewId) {
+
+        return updateReview();
+
+    }
 
     try {
 
@@ -362,14 +467,13 @@ async function submitReview(e) {
             );
 
             return;
+
         }
 
         const body = {
 
             productId:
-                Number(
-                    currentProductId
-                ),
+                Number(currentProductId),
 
             rating:
                 Number(
@@ -382,23 +486,29 @@ async function submitReview(e) {
                 document.getElementById(
                     "review-text"
                 ).value.trim()
+
         };
 
         const response =
             await fetch(
                 REVIEW_API,
                 {
+
                     method: "POST",
+
                     headers: {
+
                         "Content-Type":
                             "application/json",
-                        "Authorization":
+
+                        Authorization:
                             `Bearer ${token}`
+
                     },
+
                     body:
-                        JSON.stringify(
-                            body
-                        )
+                        JSON.stringify(body)
+
                 }
             );
 
@@ -413,6 +523,7 @@ async function submitReview(e) {
             );
 
             return;
+
         }
 
         alert(
@@ -438,52 +549,238 @@ async function submitReview(e) {
         );
 
     }
+
 }
 
+// =========================
+// REVIEW ACTIONS
+// =========================
+
 function renderReviewActions(
-    review
+    review,
+    safeComment
 ) {
 
-    const currentUserId =
-        Number(
-            localStorage.getItem(
-                "userId"
-            )
+    const currentUser =
+        JSON.parse(
+            localStorage.getItem("user")
         );
 
     if (
-        !currentUserId ||
-        currentUserId !== review.userId
+        !currentUser ||
+        currentUser.id !== review.userId
     ) {
 
         return "";
+
     }
 
     return `
 
-        <div class="mt-2">
+<div class="mt-2">
 
-            <button
-                class="btn btn-sm btn-danger"
-                onclick="deleteReview(${review.id})">
+    <button
+class="btn btn-sm btn-warning mr-2"
+onclick='editReview(
+${review.id},
+${review.rating},
+${safeComment}
+)'>
 
-                Delete
+Edit
 
-            </button>
+</button>
 
-        </div>
+<button
+    class="btn btn-sm btn-danger"
+    onclick="deleteReview(${review.id})">
 
-    `;
+    Delete
+
+</button>
+
+</div>
+
+`;
+
 }
 
-async function deleteReview(id) {
+// =========================
+// EDIT REVIEW
+// =========================
+
+function editReview(
+    id,
+    rating,
+    comment
+) {
+
+    editingReviewId = id;
+
+    document.getElementById(
+        "review-rating"
+    ).value = rating;
+
+    document.getElementById(
+        "review-text"
+    ).value = comment;
+
+    document.getElementById(
+        "submit-review-btn"
+    ).textContent =
+        "Update Review";
+
+    document
+        .getElementById(
+            "cancel-edit-review"
+        )
+        .classList.remove(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "review-form"
+        )
+        .scrollIntoView({
+
+            behavior:
+                "smooth"
+
+        });
+
+}
+
+// =========================
+// UPDATE REVIEW
+// =========================
+
+async function updateReview() {
+
+    try {
+
+        const token =
+            localStorage.getItem(
+                "accessToken"
+            );
+
+        const body = {
+
+            rating:
+                Number(
+                    document.getElementById(
+                        "review-rating"
+                    ).value
+                ),
+
+            comment:
+                document.getElementById(
+                    "review-text"
+                ).value.trim()
+
+        };
+
+        const response =
+            await fetch(
+                `${REVIEW_API}/${editingReviewId}`,
+{
+
+    method:
+        "PUT",
+
+            headers: {
+
+    "Content-Type":
+    "application/json",
+
+        Authorization:
+    `Bearer ${token}`
+
+},
+
+    body:
+        JSON.stringify(body)
+
+}
+);
+
+if (!response.ok) {
+
+    throw new Error();
+
+}
+
+alert(
+    "Review updated successfully"
+);
+
+cancelEditReview();
+
+loadProductRating();
+
+loadReviews(
+    currentReviewPage
+);
+
+} catch (e) {
+
+    console.error(e);
+
+    alert(
+        "Update review failed"
+    );
+
+}
+
+}
+
+// =========================
+// CANCEL EDIT
+// =========================
+
+function cancelEditReview() {
+
+    editingReviewId = null;
+
+    document
+        .getElementById(
+            "review-form"
+        )
+        .reset();
+
+    document
+        .getElementById(
+            "submit-review-btn"
+        )
+        .textContent =
+        "Submit Review";
+
+    document
+        .getElementById(
+            "cancel-edit-review"
+        )
+        .classList.add(
+        "d-none"
+    );
+
+}
+
+// =========================
+// DELETE REVIEW
+// =========================
+
+async function deleteReview(
+    id
+) {
 
     if (
         !confirm(
             "Delete this review?"
         )
     ) {
+
         return;
+
     }
 
     try {
@@ -497,11 +794,17 @@ async function deleteReview(id) {
             await fetch(
                 `${REVIEW_API}/${id}`,
                 {
-                    method: "DELETE",
+
+                    method:
+                        "DELETE",
+
                     headers: {
-                        "Authorization":
+
+                        Authorization:
                             `Bearer ${token}`
+
                     }
+
                 }
             );
 
@@ -530,12 +833,21 @@ async function deleteReview(id) {
         );
 
     }
+
 }
 
-function formatDate(dateString) {
+// =========================
+// FORMAT DATE
+// =========================
+
+function formatDate(
+    dateString
+) {
 
     if (!dateString) {
+
         return "";
+
     }
 
     return new Date(
@@ -543,9 +855,17 @@ function formatDate(dateString) {
     ).toLocaleDateString(
         "vi-VN",
         {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
+
+            day:
+                "2-digit",
+
+            month:
+                "2-digit",
+
+            year:
+                "numeric"
+
         }
     );
+
 }

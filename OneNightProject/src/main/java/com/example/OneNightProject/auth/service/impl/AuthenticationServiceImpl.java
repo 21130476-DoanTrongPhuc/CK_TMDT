@@ -68,9 +68,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             );
 
             return new AuthenticationResponse(
-                    jwtService.generateToken(
-                            userDetailsService.loadUserByUsername(request.getEmail())
-                    )
+                        jwtService.generateToken(userDetailsService.loadUserByUsername(request.getEmail()))
             );
 
         } catch (AuthenticationException e) {

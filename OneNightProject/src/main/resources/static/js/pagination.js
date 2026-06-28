@@ -126,11 +126,6 @@ async function loadProducts(page = 0) {
         const data =
             await response.json();
 
-        console.log(
-            "Products:",
-            data
-        );
-
         currentPage =
             data.number;
 
@@ -274,36 +269,47 @@ function createProductCard(product, checkWishlist) {
         product.thumbnailUrl ||
         "img/shop/catalog/06.jpg";
 
+    const hasDiscount =
+        product.discountPrice &&
+        product.discountPrice < product.price;
+
+    const discountPercent = hasDiscount
+        ? calculateDiscount(product.price, product.discountPrice)
+        : 0;
+
+    const saveMoney = hasDiscount
+        ? product.price - product.discountPrice
+        : 0;
 
     return `
         <div class="col-md-4 col-sm-6 px-2 mb-4">
 
-            <div class="card product-card">
-                
+            <div class="card product-card h-100">
+
                 ${
-                    product.discountPrice &&
-                    product.discountPrice < product.price
-                        ? `
-                        <span class="badge badge-danger badge-shadow">
-                            -${calculateDiscount(product.price, product.discountPrice)}%
-                        </span>
+        hasDiscount
+            ? `
+                            <span class="badge badge-danger badge-shadow"
+                                  style="position:absolute;top:12px;left:12px;z-index:5;">
+                                -${discountPercent}%
+                            </span>
+
+                            <span class="badge badge-warning"
+                                  style="position:absolute;top:12px;right:12px;z-index:5;">
+                                SALE
+                            </span>
                         `
-                        : ""
-                }
-            
+            : ""
+    }
+
                 <a
                     class="btn-wishlist btn-sm"
                     href="#"
                     data-wishlisted="${checkWishlist}"
                     onclick="addToWishlist(event, ${product.id}, this)">
-                
-                    <i class="czi-heart ${
-                        checkWishlist
-                            ? 'text-danger'
-                            : ''
-                    }">
-                    </i>
-                
+
+                    <i class="czi-heart ${checkWishlist ? "text-danger" : ""}"></i>
+
                 </a>
 
                 <a
@@ -313,6 +319,7 @@ function createProductCard(product, checkWishlist) {
                     <img
                         src="${imageUrl}"
                         alt="${product.name}">
+
                 </a>
 
                 <div class="card-body py-2">
@@ -322,6 +329,7 @@ function createProductCard(product, checkWishlist) {
                         href="#">
 
                         ${product.categoryName ?? ""}
+
                     </a>
 
                     <h3 class="product-title font-size-sm">
@@ -332,30 +340,31 @@ function createProductCard(product, checkWishlist) {
 
                     </h3>
 
-                    <div class="d-flex justify-content-between">
-
                     <div class="product-price">
-                    
+
                         ${
-                            product.discountPrice &&
-                            product.discountPrice < product.price
-                                ? `
-                                    <span class="text-accent">
+        hasDiscount
+            ? `
+                                    <span class="text-danger font-weight-bold h6">
                                         ${formatPrice(product.discountPrice)}
                                     </span>
-                    
-                                    <del class="font-size-sm text-muted ml-2">
+
+                                    <br>
+
+                                    <del class="text-muted small">
                                         ${formatPrice(product.price)}
                                     </del>
+
+                                    <div class="small text-success mt-1">
+                                        Tiết kiệm ${formatPrice(saveMoney)}
+                                    </div>
                                 `
-                                : `
-                                    <span class="text-accent">
+            : `
+                                    <span class="text-accent font-weight-bold">
                                         ${formatPrice(product.price)}
                                     </span>
                                 `
-                        }
-                    
-                    </div>
+    }
 
                     </div>
 

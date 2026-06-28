@@ -92,6 +92,7 @@ export interface Product {
   stock: number;
   status: ProductStatus;
 
+
   allowCustomization: boolean;
 
   categoryId: number | null;

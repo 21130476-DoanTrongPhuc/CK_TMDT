@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 public class CustomerController {
     @Autowired
     private CustomerService customerService;
+
+
     @PostMapping()
     public ResponseEntity<CustomerResponse> register(@RequestBody CustomerRequest request){
         return ResponseEntity.ok(customerService.register(request));

@@ -76,10 +76,46 @@ function renderProduct(product) {
     ).textContent =
         product.name;
 
-    document.getElementById(
-        "product-price"
-    ).textContent =
-        formatPrice(product.price);
+    const priceElement =
+        document.getElementById("product-price");
+
+    const hasDiscount =
+        product.discountPrice &&
+        product.discountPrice < product.price;
+
+    if (hasDiscount) {
+
+        const discountPercent =
+            calculateDiscount(
+                product.price,
+                product.discountPrice
+            );
+
+        priceElement.innerHTML = `
+        <span class="h4 text-danger font-weight-bold">
+            ${formatPrice(product.discountPrice)}
+        </span>
+
+        <br>
+
+        <del class="text-muted">
+            ${formatPrice(product.price)}
+        </del>
+
+        <span class="badge badge-danger ml-2">
+            -${discountPercent}%
+        </span>
+    `;
+
+    } else {
+
+        priceElement.innerHTML = `
+        <span class="h4 text-accent font-weight-bold">
+            ${formatPrice(product.price)}
+        </span>
+    `;
+
+    }
 
     document.getElementById(
         "product-stock"
@@ -146,6 +182,18 @@ function formatPrice(price) {
     return new Intl.NumberFormat(
         "vi-VN"
     ).format(price) + " ₫";
+}
+
+function calculateDiscount(
+    originalPrice,
+    discountPrice
+) {
+
+    return Math.round(
+        ((originalPrice - discountPrice)
+            / originalPrice) * 100
+    );
+
 }
 
 // =========================
