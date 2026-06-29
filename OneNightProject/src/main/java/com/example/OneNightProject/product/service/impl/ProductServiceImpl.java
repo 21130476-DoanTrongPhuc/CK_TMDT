@@ -7,6 +7,7 @@ import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.product.mapper.ProductMapper;
 import com.example.OneNightProject.product.repository.ProductRepository;
 import com.example.OneNightProject.product.repository.ProductSpecification;
+import com.example.OneNightProject.product.repository.ProductViewRepository;
 import com.example.OneNightProject.product.service.ProductService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final ProductViewRepository productViewRepository;
     private final ProductSpecification productSpecification;
 
     // =========================
@@ -274,6 +276,32 @@ public class ProductServiceImpl implements ProductService {
                 .map(productMapper::toResponse)
                 .getContent();
     }
+
+    @Override
+    public List<ProductResponse> getTrendingProducts(
+            Integer days,
+            Integer limit) {
+
+        LocalDateTime fromDate =
+                LocalDateTime.now().minusDays(days);
+
+        Pageable pageable =
+                PageRequest.of(
+                        0,
+                        limit
+                );
+
+        List<Product> products =
+                productViewRepository.findTrendingProducts(
+                        fromDate,
+                        pageable
+                );
+
+        return products.stream()
+                .map(productMapper::toResponse)
+                .toList();
+    }
+
 
     // =========================
     // BY CATEGORY

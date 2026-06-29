@@ -29,4 +29,8 @@ public interface ProductViewRepository
             @Param("fromDate") LocalDateTime fromDate,
             Pageable pageable
     );
+
+    ProductView findByUser_IdAndProduct_Id(Long userId, Long productId);
+
+    boolean existsByUser_IdAndProduct_Id(Long userId, Long productId);
 }

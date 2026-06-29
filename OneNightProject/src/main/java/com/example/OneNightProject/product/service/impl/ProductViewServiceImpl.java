@@ -1,6 +1,8 @@
 package com.example.OneNightProject.product.service.impl;
 
+import com.example.OneNightProject.auth.service.JwtService;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
+import com.example.OneNightProject.product.dto.response.ProductViewResponse;
 import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.product.entity.ProductView;
 import com.example.OneNightProject.product.mapper.ProductMapper;
@@ -30,6 +32,7 @@ public class ProductViewServiceImpl
     private final ProductRepository productRepository;
     private final CustomerRepository userRepository;
     private final ProductMapper productMapper;
+    private final JwtService jwtService;
 
     @Override
     public void recordView(Long productId, Long userId) {
@@ -71,5 +74,40 @@ public class ProductViewServiceImpl
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public ProductViewResponse createViewProduct(String authHeader, Long productId) {
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
+
+        Users users = userRepository.findByEmail(email);
+
+        if(productViewRepository.existsByUser_IdAndProduct_Id(users.getId(), productId)){
+
+            ProductView productView = productViewRepository.findByUser_IdAndProduct_Id(users.getId(), productId);
+
+            return ProductViewResponse.builder()
+                    .id(productView.getId())
+                    .userId(productView.getUser().getId())
+                    .productId(productView.getProduct().getId())
+                    .viewAt(productView.getViewedAt().toLocalDate())
+                    .build();
+        }
+
+        ProductView productView = ProductView.builder()
+                .product(productRepository.findByProductId(productId))
+                .user(users)
+                .viewedAt(LocalDateTime.now())
+                .build();
+
+        productViewRepository.save(productView);
+
+        return ProductViewResponse.builder()
+                .id(productView.getId())
+                .userId(productView.getUser().getId())
+                .productId(productView.getProduct().getId())
+                .viewAt(productView.getViewedAt().toLocalDate())
+                .build();
     }
 }

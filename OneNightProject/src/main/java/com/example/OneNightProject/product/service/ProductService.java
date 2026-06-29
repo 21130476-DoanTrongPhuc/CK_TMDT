@@ -31,4 +31,11 @@ public interface ProductService {
     List<ProductResponse> getNewestProducts();
     List<ProductResponse>
     getRelatedProducts(Long productId);
+
+    List<ProductResponse> getTrendingProducts(
+            Integer days,
+            Integer limit
+    );
+
+    Page<ProductResponse> getByCategory(Long categoryId, Pageable pageable);
 }

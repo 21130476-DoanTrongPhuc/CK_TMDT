@@ -3,11 +3,14 @@ package com.example.OneNightProject.product.controller;
 import com.example.OneNightProject.product.dto.request.ProductFilterRequest;
 import com.example.OneNightProject.product.dto.request.ProductRequest;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
+import com.example.OneNightProject.product.dto.response.ProductViewResponse;
 import com.example.OneNightProject.product.entity.ProductImage;
 import com.example.OneNightProject.product.repository.ProductImageRepository;
 import com.example.OneNightProject.product.service.ProductImageService;
 import com.example.OneNightProject.product.service.ProductService;
+import com.example.OneNightProject.product.service.ProductViewService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/products")
@@ -28,6 +33,7 @@ public class ProductController {
     private final ProductService productService;
     private final ProductImageService productImageService;
     private final ProductImageRepository imageRepository;
+    private final ProductViewService productViewService;
 
     /**
      * Phân trang sản phẩm
@@ -147,5 +153,55 @@ public class ProductController {
 //        productImageService.deleteImage(imageId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lấy sản phẩm trending
+     */
+    @GetMapping("/trending")
+    public ResponseEntity<?> getTrendingProducts(
+
+            @RequestParam(defaultValue = "30")
+            Integer days,
+
+            @RequestParam(defaultValue = "8")
+            Integer limit){
+
+        return ResponseEntity.ok(
+                productService.getTrendingProducts(
+                        days,
+                        limit
+                )
+        );
+    }
+
+    @PostMapping("/{productId}/view")
+    public ResponseEntity<ProductViewResponse> createViewProduct(
+            @RequestHeader("Authorization")
+            String authHeader,
+            @PathVariable Long productId
+    ){
+        return ResponseEntity.ok(
+                productViewService.createViewProduct(
+                        authHeader,
+                        productId
+                )
+        );
+    }
+
+    @GetMapping ("/{categoryId}/category")
+    public ResponseEntity<?> getProductByCategory(
+            @PathVariable Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ){
+        Pageable pageable = PageRequest.of(page, size);
+
+        return ResponseEntity.ok(
+                productService.getByCategory(
+                        categoryId,
+                        pageable
+                )
+        );
     }
 }

@@ -38,6 +38,8 @@ public interface ProductRepository extends
             Long sellerId,
             Pageable pageable);
 
+    List<Product> findByCategory_Id(Long categoryId, Pageable pageable);
+
     long countByStatus(
             ProductStatus status);
 
