@@ -18,4 +18,6 @@ public interface PromotionService {
     PromotionResponse changeActive(String authHeader, Long id, Boolean active);
 
     void delete(String authHeader, Long id);
+
+    PromotionResponse getPromoteByProduct(Long productId);
 }

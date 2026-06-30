@@ -5,6 +5,7 @@ import com.example.OneNightProject.promotion.dto.response.PromotionResponse;
 import com.example.OneNightProject.promotion.service.PromotionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -74,4 +75,12 @@ public class PromotionController {
     ) {
         return promotionService.changeActive(authHeader, id, active);
     }
+
+    @GetMapping("/{productId}/product")
+    public ResponseEntity<PromotionResponse> getPromotionByProduct(
+            @PathVariable Long productId
+    ) {
+        return ResponseEntity.ok(promotionService.getPromoteByProduct(productId));
+    }
+
 }

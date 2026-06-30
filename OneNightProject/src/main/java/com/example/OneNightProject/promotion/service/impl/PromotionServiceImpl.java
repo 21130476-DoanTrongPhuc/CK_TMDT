@@ -47,6 +47,7 @@ public class PromotionServiceImpl implements PromotionService {
                 .name(request.getName())
                 .code(code)
                 .discountType(request.getDiscountType())
+                .applyType(request.getApplyType())
                 .discountValue(request.getDiscountValue())
                 .minOrderValue(defaultZero(request.getMinOrderValue()))
                 .maxDiscountAmount(request.getMaxDiscountAmount())
@@ -106,6 +107,7 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setEndDate(request.getEndDate());
         promotion.setActive(request.getActive() == null || request.getActive());
         promotion.setProduct(resolveSellerProduct(seller, request.getProductId()));
+        promotion.setApplyType(request.getApplyType());
 
         return toResponse(promotionRepository.save(promotion));
     }
@@ -132,6 +134,34 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setActive(false);
 
         promotionRepository.save(promotion);
+    }
+
+    @Override
+    public PromotionResponse getPromoteByProduct(Long productId) {
+
+        Promotion promotion =
+                promotionRepository.findActivePromotionByProduct(productId);
+
+        if (promotion == null) {
+            return null;
+        }
+
+        return toResponse(promotion);
+    }
+
+    private BigDecimal calculateDiscount(Promotion p, BigDecimal price) {
+
+        if (p.getDiscountType() == DiscountType.PERCENTAGE) {
+            return price.multiply((p.getDiscountValue())
+                            .divide(BigDecimal.valueOf(100))
+            );
+        }
+
+        if (p.getDiscountType() == DiscountType.FIXED_AMOUNT) {
+            return (p.getDiscountValue());
+        }
+
+        return BigDecimal.ZERO;
     }
 
     public Promotion findActivePromotionForSeller(Long sellerId, String code) {
@@ -256,6 +286,7 @@ public class PromotionServiceImpl implements PromotionService {
                 .name(promotion.getName())
                 .code(promotion.getCode())
                 .discountType(promotion.getDiscountType())
+                .applyType(promotion.getApplyType())
                 .discountValue(promotion.getDiscountValue())
                 .minOrderValue(promotion.getMinOrderValue())
                 .maxDiscountAmount(promotion.getMaxDiscountAmount())

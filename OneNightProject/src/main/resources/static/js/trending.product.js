@@ -1,6 +1,12 @@
 const TRENDING_PRODUCT_API =
     "http://localhost:8081/api/v1/products/trending";
 
+const WISHLIST_API =
+    "http://localhost:8081/api/v1/wishlist";
+
+const PROMOTION_API =
+    "http://localhost:8081/api/v1/seller/promotions";
+
 document.addEventListener(
     "DOMContentLoaded",
     loadTrendingProducts
@@ -15,9 +21,7 @@ async function loadTrendingProducts() {
     try {
 
         const response =
-            await fetch(
-                TRENDING_PRODUCT_API
-            );
+            await fetch(TRENDING_PRODUCT_API);
 
         if (!response.ok) {
 
@@ -30,7 +34,7 @@ async function loadTrendingProducts() {
         const products =
             await response.json();
 
-        renderTrendingProducts(products);
+        await renderTrendingProducts(products);
 
     } catch (error) {
 
@@ -47,7 +51,7 @@ async function loadTrendingProducts() {
 // RENDER PRODUCTS
 // ==========================
 
-function renderTrendingProducts(products) {
+async function renderTrendingProducts(products) {
 
     const container =
         document.getElementById(
@@ -78,9 +82,62 @@ function renderTrendingProducts(products) {
 
     }
 
-    container.innerHTML =
-        products.map(createTrendingProductCard)
-            .join("");
+    const token =
+        localStorage.getItem("accessToken");
+
+    let html = "";
+
+    for (const product of products) {
+
+        let checkWishlist = false;
+
+        if (token) {
+
+            try {
+
+                const response =
+                    await fetch(
+
+                        `${WISHLIST_API}/${product.id}/check`,
+
+                        {
+
+                            headers: {
+
+                                Authorization:
+                                    `Bearer ${token}`
+
+                            }
+
+                        }
+
+                    );
+
+                if (response.ok) {
+
+                    checkWishlist =
+                        await response.json();
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+
+            }
+
+        }
+
+        html += createTrendingProductCard(
+            product,
+            checkWishlist
+        );
+
+    }
+
+    container.innerHTML = html;
 
 }
 
@@ -88,7 +145,10 @@ function renderTrendingProducts(products) {
 // PRODUCT CARD
 // ==========================
 
-function createTrendingProductCard(product) {
+function createTrendingProductCard(
+    product,
+    checkWishlist = false
+) {
 
     const imageUrl =
         product.thumbnailUrl ||
@@ -111,23 +171,25 @@ function createTrendingProductCard(product) {
                         <span class="badge badge-danger badge-shadow">
 
                             -${calculateDiscount(
-                product.price,
-                product.discountPrice
-            )}%
+                            product.price,
+                            product.discountPrice
+                        )}%
+            
+                                    </span>
+                                    `
+                        :
+                        ""
+                }
 
-                        </span>
-                    `
-            :
-            ""
-    }
-
-                <button
+                <a
+                    href="#"
                     class="btn-wishlist btn-sm"
-                    onclick="addToWishlist(event, ${product.id}, this)">
+                    data-wishlisted="${checkWishlist}"
+                    onclick="toggleWishlist(event, ${product.id}, this)">
 
-                    <i class="czi-heart"></i>
+                    <i class="czi-heart ${checkWishlist ? "text-danger" : ""}"></i>
 
-                </button>
+                </a>
 
                 <a
                     class="card-img-top d-block overflow-hidden"
@@ -179,7 +241,7 @@ function createTrendingProductCard(product) {
                                         ${formatPrice(product.price)}
 
                                     </del>
-                                `
+                                    `
             :
             `
                                     <span class="text-accent">
@@ -187,7 +249,7 @@ function createTrendingProductCard(product) {
                                         ${formatPrice(product.price)}
 
                                     </span>
-                                `
+                                    `
     }
 
                         </div>
@@ -219,6 +281,103 @@ function createTrendingProductCard(product) {
 }
 
 // ==========================
+// TOGGLE WISHLIST
+// ==========================
+
+async function toggleWishlist(
+    event,
+    productId,
+    element
+) {
+
+    event.preventDefault();
+
+    const token =
+        localStorage.getItem("accessToken");
+
+    if (!token) {
+
+        alert("Please login first!");
+
+        return;
+
+    }
+
+    const wishlisted =
+        element.dataset.wishlisted === "true";
+
+    try {
+
+        const response =
+            await fetch(
+
+                `${WISHLIST_API}/${productId}`,
+
+                {
+
+                    method:
+                        wishlisted
+                            ? "DELETE"
+                            : "POST",
+
+                    headers: {
+
+                        Authorization:
+                            `Bearer ${token}`
+
+                    }
+
+                }
+
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Wishlist request failed."
+            );
+
+        }
+
+        const icon =
+            element.querySelector("i");
+
+        if (wishlisted) {
+
+            icon.classList.remove(
+                "text-danger"
+            );
+
+            element.dataset.wishlisted =
+                "false";
+
+        } else {
+
+            icon.classList.add(
+                "text-danger"
+            );
+
+            element.dataset.wishlisted =
+                "true";
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Wishlist error:",
+            error
+        );
+
+        alert(
+            "Cannot update wishlist!"
+        );
+
+    }
+
+}
+
+// ==========================
 // FORMAT PRICE
 // ==========================
 
@@ -231,7 +390,7 @@ function formatPrice(price) {
 }
 
 // ==========================
-// DISCOUNT
+// CALCULATE DISCOUNT
 // ==========================
 
 function calculateDiscount(
@@ -242,7 +401,10 @@ function calculateDiscount(
     return Math.round(
 
         (
-            (originalPrice - discountPrice)
+            (
+                originalPrice -
+                discountPrice
+            )
             /
             originalPrice
         ) * 100
@@ -250,4 +412,3 @@ function calculateDiscount(
     );
 
 }
-

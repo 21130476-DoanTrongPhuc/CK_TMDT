@@ -1,20 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { promotionApi, type Promotion, type PromotionForm, type PromotionType } from '../../api/sellerApi';
+import {
+    promotionApi,
+    type Promotion,
+    type PromotionForm,
+    type PromotionType,
+    type ApplyType
+} from '../../api/sellerApi';
 import { useToast } from '../../contexts/ToastContext';
 
 const EMPTY_FORM: PromotionForm = {
     name: '',
     code: '',
     discountType: 'PERCENTAGE',
-    discountValue: 10,
-    minOrderValue: 0,
+    discountValue: null,
+    minOrderValue: null,
     maxDiscountAmount: null,
     usageLimit: null,
     startDate: new Date().toISOString().slice(0, 10),
     endDate: new Date().toISOString().slice(0, 10),
     active: true,
     productId: null,
+    applyType: 'COUPON'
 };
 
 const PAGE_SIZE = 8;
@@ -75,6 +82,7 @@ export default function SellerPromotions() {
             endDate: item.endDate.slice(0, 10),
             active: item.active,
             productId: item.productId,
+            applyType: item.applyType
         });
         setModalOpen(true);
     }
@@ -104,6 +112,10 @@ export default function SellerPromotions() {
         }
         if (new Date(form.startDate) > new Date(form.endDate)) {
             showToast('Ngày kết thúc phải sau ngày bắt đầu', 'error');
+            return;
+        }
+        if (form.applyType === 'PRODUCT' && !form.productId) {
+            showToast('Vui lòng chọn sản phẩm áp dụng', 'error');
             return;
         }
 
@@ -180,6 +192,7 @@ export default function SellerPromotions() {
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Mã</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Tên</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Loại</th>
+                                <th className="text-left px-4 py-3 font-semibold text-gray-600">Kiểu áp dụng</th>
                                 <th className="text-right px-4 py-3 font-semibold text-gray-600">Giá trị</th>
                                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Dùng</th>
                                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Kích hoạt</th>
@@ -195,6 +208,7 @@ export default function SellerPromotions() {
                                         <div className="text-xs text-gray-400">{item.productName || 'Tất cả / theo seller'}</div>
                                     </td>
                                     <td className="px-4 py-3 text-gray-600">{item.discountType === 'PERCENTAGE' ? 'Theo %' : 'Giảm tiền'}</td>
+                                    <td className="px-4 py-3 text-gray-600">{item.applyType === 'COUPON' ? 'Mã giảm giá' : 'Cho sản phẩm'}</td>
                                     <td className="px-4 py-3 text-right font-medium text-gray-700">
                                         {item.discountType === 'PERCENTAGE' ? `${item.discountValue}%` : formatMoney(item.discountValue)}
                                         {item.maxDiscountAmount ? <div className="text-xs text-gray-400">Tối đa {formatMoney(item.maxDiscountAmount)}</div> : null}
@@ -274,6 +288,12 @@ export default function SellerPromotions() {
                                 </select>
                                 <input type="number" min={1} value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} placeholder="Giá trị" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                                 <input type="number" min={0} value={form.minOrderValue} onChange={(e) => setForm({ ...form, minOrderValue: Number(e.target.value) })} placeholder="Đơn tối thiểu" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <select value={form.applyType} onChange={(e) => {const value = e.target.value; if (value === 'COUPON' || value === 'PRODUCT') { setForm({ ...form, applyType: value });}}} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                    <option value="COUPON">Mã giảm giá</option>
+                                    <option value="PRODUCT">Cho sản phẩm</option>
+                                </select>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <input type="number" min={1} value={form.usageLimit ?? ''} onChange={(e) => setForm({ ...form, usageLimit: e.target.value ? Number(e.target.value) : null })} placeholder="Giới hạn lượt dùng" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />

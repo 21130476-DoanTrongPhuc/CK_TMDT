@@ -38,4 +38,5 @@ public interface ProductService {
     );
 
     Page<ProductResponse> getByCategory(Long categoryId, Pageable pageable);
+
 }

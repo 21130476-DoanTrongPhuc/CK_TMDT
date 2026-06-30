@@ -65,6 +65,10 @@ export type PromotionType =
     | 'PERCENTAGE'
     | 'FIXED_AMOUNT';
 
+export type ApplyType =
+    | 'COUPON'
+    | 'PRODUCT';
+
 export type UserRole =
     | 'USER'
     | 'ADMIN'
@@ -359,6 +363,8 @@ export interface Promotion {
 
   discountType: PromotionType;
 
+  applyType: ApplyType;
+
   discountValue: number;
 
   minOrderValue: number;
@@ -382,6 +388,7 @@ export interface Promotion {
   productId: number | null;
 
   productName: string | null;
+
 }
 
 export interface PromotionForm {
@@ -390,6 +397,8 @@ export interface PromotionForm {
   code: string;
 
   discountType: PromotionType;
+
+  applyType: ApplyType;
 
   discountValue: number;
 
@@ -442,7 +451,7 @@ export const productApi = {
   // Tạo sản phẩm
   create: (data: ProductForm) =>
       request<Product>(
-          '/v1/seller/custom-products',
+          '/seller/products',
           {
             method: 'POST',
             body: JSON.stringify(data),
@@ -452,7 +461,7 @@ export const productApi = {
   // Cập nhật
   update: (id: number, data: ProductForm) =>
       request<Product>(
-          `/v1/seller/custom-products/${id}`,
+          `/seller/products/${id}`,
           {
             method: 'PUT',
             body: JSON.stringify(data),
@@ -462,7 +471,7 @@ export const productApi = {
   // Xóa
   delete: (id: number) =>
       fetch(
-          `${BASE_URL}/v1/seller/custom-products/${id}`,
+          `${BASE_URL}/seller/products/${id}`,
           {
             method: 'DELETE',
             headers: {
@@ -485,7 +494,7 @@ export const productApi = {
     fd.append('file', file);
 
     return fetch(
-        `${BASE_URL}/v1/products/upload/${productId}/images`,
+        `${BASE_URL}/seller/products/upload/${productId}/images`,
         {
           method: 'POST',
           headers: {
@@ -505,7 +514,7 @@ export const productApi = {
   // Xóa ảnh
   deleteImage: (imageId: number) =>
       fetch(
-          `${BASE_URL}/v1/products/images/${imageId}`,
+          `${BASE_URL}/products/images/${imageId}`,
           {
             method: 'DELETE',
             headers: {

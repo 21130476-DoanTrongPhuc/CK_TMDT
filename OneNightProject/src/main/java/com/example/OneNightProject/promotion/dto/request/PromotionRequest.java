@@ -1,5 +1,6 @@
 package com.example.OneNightProject.promotion.dto.request;
 
+import com.example.OneNightProject.promotion.enums.ApplyType;
 import com.example.OneNightProject.promotion.enums.DiscountType;
 import lombok.Data;
 
@@ -30,4 +31,6 @@ public class PromotionRequest {
     private Boolean active;
 
     private Long productId;
+
+    private ApplyType applyType;
 }

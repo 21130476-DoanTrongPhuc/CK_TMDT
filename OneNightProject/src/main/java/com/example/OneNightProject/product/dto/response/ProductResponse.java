@@ -1,6 +1,7 @@
 package com.example.OneNightProject.product.dto.response;
 
 import com.example.OneNightProject.product.enums.ProductStatus;
+import com.example.OneNightProject.promotion.dto.response.PromotionResponse;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -45,4 +46,6 @@ public class ProductResponse {
     private List<ProductImageResponse> images;
 
     private LocalDateTime createdAt;
+
+    private PromotionResponse promotionResponse;
 }

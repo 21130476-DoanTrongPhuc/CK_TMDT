@@ -1,5 +1,6 @@
 package com.example.OneNightProject.promotion.dto.response;
 
+import com.example.OneNightProject.promotion.enums.ApplyType;
 import com.example.OneNightProject.promotion.enums.DiscountType;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,7 @@ public class PromotionResponse {
 
     private Long id;
 
-    private String name;
+    private Boolean active;
 
     private String code;
 
@@ -21,25 +22,27 @@ public class PromotionResponse {
 
     private BigDecimal discountValue;
 
-    private BigDecimal minOrderValue;
+    private LocalDateTime endDate;
 
     private BigDecimal maxDiscountAmount;
+
+    private BigDecimal minOrderValue;
+
+    private String name;
+
+    private LocalDateTime startDate;
 
     private Integer usageLimit;
 
     private Integer usedCount;
 
-    private LocalDateTime startDate;
-
-    private LocalDateTime endDate;
-
-    private Boolean active;
+    private Long productId;
 
     private Long sellerId;
 
     private String sellerName;
 
-    private Long productId;
-
     private String productName;
+
+    private ApplyType applyType;
 }

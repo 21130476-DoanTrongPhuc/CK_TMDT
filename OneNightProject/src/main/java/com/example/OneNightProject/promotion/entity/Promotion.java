@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.example.OneNightProject.product.entity.Product;
+import com.example.OneNightProject.promotion.enums.ApplyType;
 import com.example.OneNightProject.promotion.enums.DiscountType;
 import com.example.OneNightProject.user.entity.Users;
 
@@ -61,6 +62,10 @@ public class Promotion {
     private LocalDateTime endDate;
 
     private Boolean active;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ApplyType applyType;
 
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)

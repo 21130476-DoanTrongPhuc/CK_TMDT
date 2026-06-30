@@ -3,6 +3,8 @@ package com.example.OneNightProject.seller.controller;
 import com.example.OneNightProject.auth.service.JwtService;
 import com.example.OneNightProject.product.dto.request.ProductRequest;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
+import com.example.OneNightProject.product.entity.ProductImage;
+import com.example.OneNightProject.product.service.ProductImageService;
 import com.example.OneNightProject.product.service.ProductService;
 import com.example.OneNightProject.user.entity.Users;
 import com.example.OneNightProject.user.repository.CustomerRepository;
@@ -12,8 +14,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/seller/products")
@@ -22,6 +26,7 @@ public class SellerProductController {
 
     private final JwtService jwtService;
     private final CustomerRepository customerRepository;
+    private final ProductImageService productImageService;
     private final ProductService productService;
 
     private Users getSeller(String authHeader) {
@@ -72,5 +77,22 @@ public class SellerProductController {
         }
         productService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Upload 1 ảnh cho sản phẩm
+     */
+    @PostMapping(
+            value = "/upload/{productId}/images",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductImage upload(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long productId,
+            @RequestParam("file") MultipartFile file) {
+
+        return productImageService.uploadImage(
+                authHeader,
+                productId,
+                file);
     }
 }
