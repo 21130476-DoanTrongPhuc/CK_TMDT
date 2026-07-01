@@ -5,9 +5,7 @@ document.addEventListener(
         loadCart();
 
         document
-            .getElementById(
-                "update-cart-btn"
-            )
+            .getElementById("update-cart-btn")
             ?.addEventListener(
                 "click",
                 updateCart
@@ -27,7 +25,7 @@ async function loadCart() {
             await fetch(
                 "http://localhost:8081/api/v1/carts",
                 {
-                    method: "POST",
+                    method: "GET",
                     headers: {
                         Authorization:
                             `Bearer ${localStorage.getItem("accessToken")}`
@@ -36,9 +34,7 @@ async function loadCart() {
             );
 
         if (!response.ok) {
-            throw new Error(
-                "Cannot load cart"
-            );
+            throw new Error("Cannot load cart");
         }
 
         const cart =
@@ -50,9 +46,7 @@ async function loadCart() {
 
         console.error(error);
 
-        alert(
-            "Cannot load cart"
-        );
+        alert("Cannot load cart");
     }
 }
 
@@ -63,175 +57,234 @@ async function loadCart() {
 function renderCart(cart) {
 
     const container =
-        document.getElementById(
-            "cart-items"
-        );
+        document.getElementById("cart-items");
 
     let html = "";
 
-    cart.cartItems.forEach(
-        item => {
+    if (
+        !cart.cartItems ||
+        cart.cartItems.length === 0
+    ) {
 
-            const product =
-                item.product;
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <h5>Your cart is empty</h5>
+            </div>
+        `;
 
-            const imageUrl =
-                product.productImage
-                    ? product.productImage.image_url
-                    : "img/no-image.png";
+        renderSummary(cart);
 
-            html += `
-                <div
-                    class="d-sm-flex justify-content-between align-items-center my-4 pb-3 border-bottom">
+        return;
+    }
 
-                    <div
-                        class="media media-ie-fix d-block d-sm-flex align-items-center text-center text-sm-left">
+    cart.cartItems.forEach(item => {
 
-                        <a
-                            class="d-inline-block mx-auto mr-sm-4"
-                            href="shop-single-v1.html?id=${product.id}"
-                            style="width: 10rem;">
+        const product =
+            item.product;
 
-                            <img
-                                src="${imageUrl}"
-                                alt="${product.name}">
+        const imageUrl =
+            product.images &&
+            product.images.length > 0
+                ? product.images[0].imageUrl
+                : "img/no-image.png";
+
+        html += `
+
+        <div
+            class="d-sm-flex justify-content-between align-items-center my-4 pb-3 border-bottom">
+
+            <div
+                class="media media-ie-fix d-block d-sm-flex align-items-center text-center text-sm-left">
+
+                <a
+                    class="d-inline-block mx-auto mr-sm-4"
+                    href="shop-single-v1.html?id=${product.id}"
+                    style="width:10rem">
+
+                    <img
+                        src="${imageUrl}"
+                        alt="${product.name}">
+                </a>
+
+                <div class="media-body pt-2">
+
+                    <h3 class="product-title font-size-base mb-2">
+
+                        <a href="shop-single-v1.html?id=${product.id}">
+                            ${product.name}
                         </a>
 
-                        <div class="media-body pt-2">
+                    </h3>
 
-                            <h3
-                                class="product-title font-size-base mb-2">
+                    <div class="font-size-sm">
 
-                                <a href="shop-single-v1.html?id=${product.id}">
-                                    ${product.name}
-                                </a>
+                        <span class="text-muted mr-2">
+                            Product ID:
+                        </span>
 
-                            </h3>
+                        ${product.id}
 
-                            <div class="font-size-sm">
-                                <span class="text-muted mr-2">
-                                    Product ID:
-                                </span>
+                    </div>
 
-                                ${product.id}
-                            </div>
+                    <div class="font-size-sm">
 
-                            <div class="font-size-sm">
-                                <span class="text-muted mr-2">
-                                    Stock:
-                                </span>
+                        <span class="text-muted mr-2">
+                            Stock:
+                        </span>
 
-                                ${product.stock}
-                            </div>
+                        ${product.stock}
 
-                            <div class="font-size-lg text-accent pt-2">
-                                ${formatPrice(product.price)}
-                            </div>
+                    </div>
 
-                            ${
-                                item.customized
-                                    ? `
-                                        <span class="badge badge-info">
-                                            Customized
+                    <div class="mt-2">
+
+                        ${
+            item.discountAmount > 0
+                ? `
+                                    <div>
+
+                                        <span class="h5 text-danger font-weight-bold">
+
+                                            ${formatPrice(item.discountPrice)}
+
                                         </span>
-                                      `
-                                    : ""
-                            }
 
-                        </div>
+                                        <del class="text-muted ml-2">
 
-                    </div>
+                                            ${formatPrice(item.originalPrice)}
 
-                    <div
-                        class="pt-2 pt-sm-0 pl-sm-3 mx-auto mx-sm-0 text-center text-sm-left"
-                        style="max-width: 9rem;">
+                                        </del>
 
-                        <div class="form-group mb-0">
+                                    </div>
 
-                            <label class="font-weight-medium">
-                                Quantity
-                            </label>
+                                    <div class="small text-success">
 
-                           <input
-                                class="form-control quantity-input"
-                                type="number"
-                                min="1"
-                                max="${product.stock}"
-                                value="${item.quantity}"
-                                data-cart-item-id="${item.id}"
-                                data-price="${product.price}"
-                                oninput="updateSubtotal()">
+                                        ${item.promotionName}
 
-                        </div>
+                                    </div>
 
-                        <button
-                            class="btn btn-link px-0 text-danger"
-                            type="button"
-                            onclick="removeCartItem(${item.id})">
+                                    <div class="small text-danger">
 
-                            <i class="czi-close-circle mr-2"></i>
+                                        Save ${formatPrice(item.discountAmount)}
 
-                            <span class="font-size-sm">
-                                Remove
-                            </span>
+                                    </div>
+                                  `
+                : `
+                                    <span class="h5 text-accent">
 
-                        </button>
+                                        ${formatPrice(item.originalPrice)}
+
+                                    </span>
+                                  `
+        }
 
                     </div>
+
+                    ${
+            item.customized
+                ? `
+                                <div class="mt-2">
+
+                                    <span class="badge badge-info">
+
+                                        Customized
+
+                                    </span>
+
+                                </div>
+                              `
+                : ""
+        }
 
                 </div>
-            `;
-        }
-    );
 
+            </div>
 
-    container.innerHTML =
-        html;
+            <div
+                class="pt-2 pt-sm-0 pl-sm-3 mx-auto mx-sm-0 text-center text-sm-left"
+                style="max-width:10rem">
 
-    updateSubtotal();
+                <div class="form-group mb-2">
+
+                    <label class="font-weight-medium">
+
+                        Quantity
+
+                    </label>
+
+                    <input
+                        class="form-control quantity-input"
+                        type="number"
+                        min="1"
+                        max="${product.stock}"
+                        value="${item.quantity}"
+                        data-cart-item-id="${item.id}">
+
+                </div>
+
+                <div class="font-size-sm mb-2">
+
+                    <strong>
+
+                        Total:
+
+                    </strong>
+
+                    <span class="text-danger">
+
+                        ${formatPrice(item.itemTotal)}
+
+                    </span>
+
+                </div>
+
+                <button
+                    class="btn btn-link px-0 text-danger"
+                    type="button"
+                    onclick="removeCartItem(${item.id})">
+
+                    <i class="czi-close-circle mr-2"></i>
+
+                    <span class="font-size-sm">
+
+                        Remove
+
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        `;
+    });
+
+    container.innerHTML = html;
+
+    renderSummary(cart);
 }
 
-function updateSubtotal() {
+// ======================
+// SUMMARY
+// ======================
 
-    let subtotal = 0;
+function renderSummary(cart) {
 
-    document
-        .querySelectorAll(".quantity-input")
-        .forEach(input => {
+    const subtotal =
+        document.querySelector("#subtotal h3");
 
-            const price =
-                Number(
-                    input.dataset.price
-                );
+    if (subtotal) {
 
-            const quantity =
-                Number(
-                    input.value
-                );
-
-            subtotal +=
-                price * quantity;
-        });
-
-    const subtotalElement =
-        document.getElementById(
-            "subtotal"
-        );
-
-    if (subtotalElement) {
-
-        subtotalElement
-            .querySelector("h3")
-            .textContent =
-            formatPrice(
-                subtotal
-            );
+        subtotal.textContent =
+            formatPrice(cart.totalPrice);
     }
 }
 
 // ======================
-// UPDATE QUANTITY
+// UPDATE CART
 // ======================
+
 async function updateCart() {
 
     try {
@@ -247,9 +300,7 @@ async function updateCart() {
                 input.dataset.cartItemId;
 
             const quantity =
-                Number(
-                    input.value
-                );
+                Number(input.value);
 
             const response =
                 await fetch(
@@ -270,17 +321,18 @@ async function updateCart() {
                 );
 
             if (!response.ok) {
+
                 throw new Error(
                     "Update failed"
                 );
             }
         }
 
+        await loadCart();
+
         alert(
             "Cart updated successfully"
         );
-
-        loadCart();
 
     } catch (error) {
 
@@ -293,19 +345,18 @@ async function updateCart() {
 }
 
 // ======================
-// REMOVE CART ITEM
+// REMOVE ITEM
 // ======================
 
 async function removeCartItem(
     cartItemId
 ) {
 
-    const confirmed =
-        confirm(
+    if (
+        !confirm(
             "Remove this item?"
-        );
-
-    if (!confirmed) {
+        )
+    ) {
         return;
     }
 
@@ -323,15 +374,14 @@ async function removeCartItem(
                 }
             );
 
-        console.log(response);
-
         if (!response.ok) {
+
             throw new Error(
                 "Delete failed"
             );
         }
 
-        loadCart();
+        await loadCart();
 
     } catch (error) {
 
@@ -349,7 +399,11 @@ async function removeCartItem(
 
 function formatPrice(price) {
 
+    if (price == null) {
+        return "0 ₫";
+    }
+
     return new Intl.NumberFormat(
         "vi-VN"
-    ).format(price) + " ₫";
+    ).format(Number(price)) + " ₫";
 }

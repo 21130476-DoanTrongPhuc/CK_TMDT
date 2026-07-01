@@ -229,7 +229,7 @@ async function completeOrder() {
             );
 
             window.location.href =
-                `checkout-complete.html?orderId=${orderId}`;
+                `checkout-complete.html`;
 
             return;
         }
