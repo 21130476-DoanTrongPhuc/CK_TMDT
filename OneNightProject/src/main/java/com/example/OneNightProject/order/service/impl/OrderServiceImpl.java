@@ -171,17 +171,47 @@ public class OrderServiceImpl implements OrderService {
             OrderItem item = new OrderItem();
 
             item.setOrder(order);
-            item.setProductId(ci.getProduct());
-            item.setQuantity(ci.getQuantity());
-            item.setCustomized(ci.isCustomized());
-            item.setPrice(ci.getProduct().getPrice());
 
-            if (ci.isCustomized()) {
-                item.setPriceCustomProduct(
-                        ci.getProduct().getPrice()
-                                .multiply(BigDecimal.valueOf(ci.getQuantity()))
-                );
-            }
+            item.setProductId(
+                    ci.getProduct()
+            );
+
+            item.setQuantity(
+                    ci.getQuantity()
+            );
+
+            item.setCustomized(
+                    ci.isCustomized()
+            );
+
+// Snapshot giá
+            item.setPrice(
+                    ci.getUnitPrice()
+            );
+
+            item.setOriginalPrice(
+                    ci.getOriginalPrice()
+            );
+
+            item.setDiscountPrice(
+                    ci.getUnitPrice()
+            );
+
+            item.setDiscountAmount(
+                    ci.getDiscountAmount()
+            );
+
+            item.setPromotionId(
+                    ci.getPromotionId()
+            );
+
+            item.setPromotionName(
+                    ci.getPromotionName()
+            );
+
+            item.setPriceCustomProduct(
+                    ci.getPriceCustomProduct()
+            );
 
             items.add(item);
         }
@@ -196,8 +226,12 @@ public class OrderServiceImpl implements OrderService {
         for (CartItem ci : cartItems) {
 
             BigDecimal itemTotal =
-                    ci.getProduct().getPrice()
-                            .multiply(BigDecimal.valueOf(ci.getQuantity()));
+                    ci.getUnitPrice()
+                            .multiply(
+                                    BigDecimal.valueOf(
+                                            ci.getQuantity()
+                                    )
+                            );
 
             if (ci.isCustomized()) {
                 itemTotal = itemTotal.add(ci.getPriceCustomProduct());

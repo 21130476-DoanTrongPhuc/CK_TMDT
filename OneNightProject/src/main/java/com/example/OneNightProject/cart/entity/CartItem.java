@@ -39,10 +39,10 @@ public class CartItem {
 
     private Integer quantity;
 
-    private boolean isCustomized;
+    private boolean customized;
 
-    private BigDecimal priceCustomProduct =
-            BigDecimal.ZERO;
+    @Column(nullable = false)
+    private BigDecimal priceCustomProduct = BigDecimal.ZERO;
 
     @OneToOne(
             mappedBy = "cartItem",
@@ -50,4 +50,20 @@ public class CartItem {
             orphanRemoval = true
     )
     private CartItemCustomized customization;
+
+    /**
+     * Snapshot promotion
+     */
+    @Column(nullable = false)
+    private BigDecimal originalPrice;
+
+    @Column(nullable = false)
+    private BigDecimal unitPrice;
+
+    @Column(nullable = false)
+    private BigDecimal discountAmount;
+
+    private Long promotionId;
+
+    private String promotionName;
 }

@@ -63,7 +63,11 @@ public class OrderMapper {
                         .id(item.getId())
                         .productId(item.getProductId().getId())
                         .quantity(item.getQuantity())
+                        .originalPrice(item.getOriginalPrice())
+                        .discountPrice(item.getDiscountPrice())
+                        .discountAmount(item.getDiscountAmount())
                         .price(item.getPrice())
+                        .promotionName(item.getPromotionName())
                         .customized(item.isCustomized())
                         .customizationPrice(item.getPriceCustomProduct())
                         .build()
@@ -220,8 +224,20 @@ public class OrderMapper {
                             item.getQuantity()
                     );
 
-                    response.setPrice(
-                            item.getPrice()
+                    response.setOriginalPrice(
+                            item.getOriginalPrice()
+                    );
+
+                    response.setDiscountPrice(
+                            item.getDiscountPrice()
+                    );
+
+                    response.setDiscountAmount(
+                            item.getDiscountAmount()
+                    );
+
+                    response.setPromotionName(
+                            item.getPromotionName()
                     );
 
                     response.setCustomized(

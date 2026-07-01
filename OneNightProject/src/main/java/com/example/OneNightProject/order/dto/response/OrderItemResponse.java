@@ -21,4 +21,12 @@ public class OrderItemResponse {
     private boolean customized;
 
     private BigDecimal customizationPrice;
+
+    private BigDecimal originalPrice;
+
+    private BigDecimal discountPrice;
+
+    private BigDecimal discountAmount;
+
+    private String promotionName;
 }

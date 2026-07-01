@@ -43,6 +43,8 @@ public class ProductResponse {
 
     private Boolean checkWishlist;
 
+    private BigDecimal discountPrice;
+
     private List<ProductImageResponse> images;
 
     private LocalDateTime createdAt;

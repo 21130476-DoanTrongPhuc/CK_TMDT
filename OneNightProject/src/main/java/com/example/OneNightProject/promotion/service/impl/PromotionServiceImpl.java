@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -139,29 +140,108 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     public PromotionResponse getPromoteByProduct(Long productId) {
 
-        Promotion promotion =
-                promotionRepository.findActivePromotionByProduct(productId);
+        Product product =
+                productRepository.findById(productId)
+                        .orElseThrow(() ->
+                                new RuntimeException("Product not found"));
 
-        if (promotion == null) {
+        List<Promotion> promotions =
+                promotionRepository.findProductPromotions(productId);
+
+        // Không có promotion riêng thì mới lấy promotion toàn shop
+        if (promotions.isEmpty()) {
+
+            promotions =
+                    promotionRepository.findSellerPromotions(
+                            product.getSeller().getId()
+                    );
+
+        }
+
+        if (promotions.isEmpty()) {
             return null;
         }
 
-        return toResponse(promotion);
+        Promotion bestPromotion =
+                getBestPromotion(
+                        promotions,
+                        product.getPrice()
+                );
+
+        return toResponse(bestPromotion);
     }
 
-    private BigDecimal calculateDiscount(Promotion p, BigDecimal price) {
+    private Promotion getBestPromotion(
+            List<Promotion> promotions,
+            BigDecimal price
+    ) {
 
-        if (p.getDiscountType() == DiscountType.PERCENTAGE) {
-            return price.multiply((p.getDiscountValue())
-                            .divide(BigDecimal.valueOf(100))
-            );
+        Promotion bestPromotion = null;
+
+        BigDecimal bestDiscount =
+                BigDecimal.ZERO;
+
+        for (Promotion promotion : promotions) {
+
+            BigDecimal discount =
+                    calculateDiscount(
+                            promotion,
+                            price
+                    );
+
+            if (discount.compareTo(bestDiscount) > 0) {
+
+                bestDiscount = discount;
+                bestPromotion = promotion;
+
+            }
+
         }
 
-        if (p.getDiscountType() == DiscountType.FIXED_AMOUNT) {
-            return (p.getDiscountValue());
+        return bestPromotion;
+    }
+
+    private BigDecimal calculateDiscount(
+            Promotion promotion,
+            BigDecimal price
+    ) {
+
+        BigDecimal discount;
+
+        if (promotion.getDiscountType() == DiscountType.PERCENTAGE) {
+
+            discount =
+                    price.multiply(
+                            promotion.getDiscountValue()
+                                    .divide(BigDecimal.valueOf(100))
+                    );
+
+            if (promotion.getMaxDiscountAmount() != null
+                    &&
+                    discount.compareTo(
+                            promotion.getMaxDiscountAmount()
+                    ) > 0) {
+
+                discount =
+                        promotion.getMaxDiscountAmount();
+
+            }
+
+        } else {
+
+            discount =
+                    promotion.getDiscountValue();
+
         }
 
-        return BigDecimal.ZERO;
+        if (discount.compareTo(price) > 0) {
+
+            discount = price;
+
+        }
+
+        return discount;
+
     }
 
     public Promotion findActivePromotionForSeller(Long sellerId, String code) {

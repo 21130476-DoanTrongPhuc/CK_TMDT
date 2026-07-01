@@ -41,4 +41,16 @@ public class OrderItem {
     )
     @JsonManagedReference
     private OrderItemCustomized customization;
+
+    private BigDecimal originalPrice;
+
+    private BigDecimal discountPrice;
+
+    private BigDecimal discountAmount;
+
+    private Long promotionId;
+
+    private String promotionName;
+
+
 }

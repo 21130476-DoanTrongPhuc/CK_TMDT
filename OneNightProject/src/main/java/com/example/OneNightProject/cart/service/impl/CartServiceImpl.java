@@ -4,6 +4,7 @@ import com.example.OneNightProject.auth.service.JwtService;
 import com.example.OneNightProject.cart.dto.request.CartItemRequest;
 import com.example.OneNightProject.cart.dto.request.CartUpdateRequest;
 import com.example.OneNightProject.cart.dto.response.CartResponse;
+import com.example.OneNightProject.cart.dto.response.PromotionResult;
 import com.example.OneNightProject.cart.entity.Cart;
 import com.example.OneNightProject.cart.entity.CartItem;
 import com.example.OneNightProject.cart.entity.CartItemCustomized;
@@ -11,8 +12,10 @@ import com.example.OneNightProject.cart.mapper.CartMapper;
 import com.example.OneNightProject.cart.repository.CartItemRepository;
 import com.example.OneNightProject.cart.repository.CartRepository;
 import com.example.OneNightProject.cart.service.CartService;
+import com.example.OneNightProject.cart.service.PromotionCalculatorService;
 import com.example.OneNightProject.product.entity.Product;
 import com.example.OneNightProject.product.repository.ProductRepository;
+import com.example.OneNightProject.promotion.entity.Promotion;
 import com.example.OneNightProject.user.entity.Users;
 import com.example.OneNightProject.user.repository.CustomerRepository;
 import jakarta.transaction.Transactional;
@@ -38,6 +41,8 @@ public class CartServiceImpl implements CartService {
     private final JwtService jwtService;
 
     private final CustomerRepository customerRepository;
+
+    private final PromotionCalculatorService promotionCalculatorService;
 
     @Override
     public CartResponse createProduct(String authHeader) {
@@ -73,6 +78,9 @@ public class CartServiceImpl implements CartService {
                                 "Product not found"
                         )
                 );
+
+        PromotionResult promotionResult =
+                promotionCalculatorService.calculate(product);
 
         if (product.getStatus() != null &&
                 product.getStatus().name().equals("DISCONTINUED")) {
@@ -123,6 +131,30 @@ public class CartServiceImpl implements CartService {
             cartItem.setPriceCustomProduct(
                     BigDecimal.ZERO
             );
+
+            cartItem.setOriginalPrice(
+                    promotionResult.getOriginalPrice()
+            );
+
+            cartItem.setUnitPrice(
+                    promotionResult.getFinalPrice()
+            );
+
+            cartItem.setDiscountAmount(
+                    promotionResult.getDiscountAmount()
+            );
+
+            if (promotionResult.getPromotion() != null) {
+
+                cartItem.setPromotionId(
+                        promotionResult.getPromotion().getId()
+                );
+
+                cartItem.setPromotionName(
+                        promotionResult.getPromotion().getName()
+                );
+
+            }
 
             CartItemCustomized customized =
                     CartItemCustomized.builder()
@@ -185,6 +217,36 @@ public class CartServiceImpl implements CartService {
                     newQuantity
             );
 
+            item.setOriginalPrice(
+                    promotionResult.getOriginalPrice()
+            );
+
+            item.setUnitPrice(
+                    promotionResult.getFinalPrice()
+            );
+
+            item.setDiscountAmount(
+                    promotionResult.getDiscountAmount()
+            );
+
+            if (promotionResult.getPromotion() != null) {
+
+                item.setPromotionId(
+                        promotionResult.getPromotion().getId()
+                );
+
+                item.setPromotionName(
+                        promotionResult.getPromotion().getName()
+                );
+
+            } else {
+
+                item.setPromotionId(null);
+
+                item.setPromotionName(null);
+
+            }
+
             cartItemRepository.save(item);
 
         } else {
@@ -202,9 +264,29 @@ public class CartServiceImpl implements CartService {
 
             cartItem.setCustomized(false);
 
-            cartItem.setPriceCustomProduct(
-                    BigDecimal.ZERO
+            cartItem.setOriginalPrice(
+                    promotionResult.getOriginalPrice()
             );
+
+            cartItem.setUnitPrice(
+                    promotionResult.getFinalPrice()
+            );
+
+            cartItem.setDiscountAmount(
+                    promotionResult.getDiscountAmount()
+            );
+
+            if (promotionResult.getPromotion() != null) {
+
+                cartItem.setPromotionId(
+                        promotionResult.getPromotion().getId()
+                );
+
+                cartItem.setPromotionName(
+                        promotionResult.getPromotion().getName()
+                );
+
+            }
 
             cart.addCartItem(cartItem);
 
@@ -295,6 +377,41 @@ public class CartServiceImpl implements CartService {
         item.setQuantity(
                 update.getQuantity()
         );
+
+        PromotionResult promotionResult =
+                promotionCalculatorService.calculate(
+                        item.getProduct()
+                );
+
+        item.setOriginalPrice(
+                promotionResult.getOriginalPrice()
+        );
+
+        item.setUnitPrice(
+                promotionResult.getFinalPrice()
+        );
+
+        item.setDiscountAmount(
+                promotionResult.getDiscountAmount()
+        );
+
+        if (promotionResult.getPromotion() != null) {
+
+            item.setPromotionId(
+                    promotionResult.getPromotion().getId()
+            );
+
+            item.setPromotionName(
+                    promotionResult.getPromotion().getName()
+            );
+
+        } else {
+
+            item.setPromotionId(null);
+
+            item.setPromotionName(null);
+
+        }
 
         cartItemRepository.save(item);
 

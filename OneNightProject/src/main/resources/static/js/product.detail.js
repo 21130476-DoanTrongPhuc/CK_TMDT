@@ -1,3 +1,5 @@
+
+
 document.addEventListener(
     "DOMContentLoaded",
     () => {
@@ -35,84 +37,132 @@ async function loadProduct() {
 
     try {
 
-        const productId =
-            getProductId();
+        const productId = getProductId();
 
-        const response =
-            await fetch(
-                `http://localhost:8081/api/v1/products/${productId}`
-            );
+        const [productResponse, promotionResponse] =
+            await Promise.all([
 
-        if (!response.ok) {
+                fetch(`http://localhost:8081/api/v1/products/${productId}`),
+
+                fetch(`http://localhost:8081/api/v1/seller/promotions/${productId}/product`)
+
+            ]);
+
+        if (!productResponse.ok) {
 
             throw new Error(
                 "Cannot load product"
             );
+
         }
 
         const product =
-            await response.json();
+            await productResponse.json();
 
-        renderProduct(product);
+        console.log("Product:", product);
+
+        let promotion = null;
+
+        if (promotionResponse.ok) {
+
+            promotion =
+                await promotionResponse.json();
+
+            console.log("Promotion:", promotion);
+
+        }
+
+        renderProduct(
+            product,
+            promotion
+        );
 
     } catch (error) {
 
         console.error(error);
 
-        alert(
-            "Cannot load product"
-        );
+        alert("Cannot load product");
+
     }
+
 }
 
 // =========================
 // RENDER PRODUCT
 // =========================
 
-function renderProduct(product) {
-
+function renderProduct(
+    product,
+    promotion
+) {
+    console.log("1");
     document.getElementById(
         "product-name"
     ).textContent =
         product.name;
+    console.log("2");
 
     const priceElement =
-        document.getElementById("product-price");
+        document.getElementById(
+            "product-price"
+        );
 
-    const hasDiscount =
-        product.discountPrice &&
-        product.discountPrice < product.price;
+    console.log("3");
 
-    if (hasDiscount) {
+    if (promotion) {
+
+        console.log("4");
+
+        const discountPrice =
+            calculatePromotionPrice(
+                product.price,
+                promotion
+            );
+
+        console.log("5");
 
         const discountPercent =
             calculateDiscount(
                 product.price,
-                product.discountPrice
+                discountPrice
             );
 
+        console.log("6");
+
         priceElement.innerHTML = `
+
         <span class="h4 text-danger font-weight-bold">
-            ${formatPrice(product.discountPrice)}
+
+            ${formatPrice(discountPrice)}
+
         </span>
 
         <br>
 
         <del class="text-muted">
+
             ${formatPrice(product.price)}
+
         </del>
 
         <span class="badge badge-danger ml-2">
+
             -${discountPercent}%
+
         </span>
+
     `;
 
     } else {
 
         priceElement.innerHTML = `
+
         <span class="h4 text-accent font-weight-bold">
+
             ${formatPrice(product.price)}
+
         </span>
+
     `;
 
     }
@@ -184,14 +234,68 @@ function formatPrice(price) {
     ).format(price) + " ₫";
 }
 
+function calculatePromotionPrice(
+    price,
+    promotion
+) {
+
+    let finalPrice =
+        Number(price);
+
+    if (
+        promotion.discountType ===
+        "PERCENTAGE"
+    ) {
+
+        let discount =
+            finalPrice *
+            Number(
+                promotion.discountValue
+            ) / 100;
+
+        if (
+            promotion.maxDiscountAmount &&
+            discount >
+            Number(
+                promotion.maxDiscountAmount
+            )
+        ) {
+
+            discount =
+                Number(
+                    promotion.maxDiscountAmount
+                );
+
+        }
+
+        finalPrice -= discount;
+
+    } else {
+
+        finalPrice -=
+            Number(
+                promotion.discountValue
+            );
+
+    }
+
+    return Math.max(
+        finalPrice,
+        0
+    );
+
+}
+
 function calculateDiscount(
     originalPrice,
     discountPrice
 ) {
 
     return Math.round(
-        ((originalPrice - discountPrice)
-            / originalPrice) * 100
+        (
+            (originalPrice - discountPrice)
+            / originalPrice
+        ) * 100
     );
 
 }
@@ -282,10 +386,10 @@ async function handleCreateCartItem(
         "http://localhost:8081/api/v1/carts/items",
                {
                     method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                   headers: {
+                       "Content-Type": "application/json",
+                       Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                   },
                     body: JSON.stringify(request)
                 }
     );

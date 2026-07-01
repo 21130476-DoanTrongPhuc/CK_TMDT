@@ -6,8 +6,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
 @Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItemResponse {
@@ -20,7 +20,19 @@ public class CartItemResponse {
 
     private BigDecimal priceCustomProduct;
 
+    // giá gốc
+    private BigDecimal originalPrice;
+
+    // giá sau giảm
+    private BigDecimal discountPrice;
+
+    // giảm bao nhiêu
+    private BigDecimal discountAmount;
+
+    // tổng của item
     private BigDecimal itemTotal;
+
+    private String promotionName;
 
     private ProductResponse product;
 
@@ -29,4 +41,5 @@ public class CartItemResponse {
     private String customNote;
 
     private String customImage;
+
 }

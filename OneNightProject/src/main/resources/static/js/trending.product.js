@@ -47,6 +47,30 @@ async function loadTrendingProducts() {
 
 }
 
+async function getProductPromotion(productId) {
+
+    try {
+
+        const response = await fetch(
+            `${PROMOTION_API}/${productId}/product`
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        return await response.json();
+
+    } catch (e) {
+
+        console.error(e);
+
+        return null;
+
+    }
+
+}
+
 // ==========================
 // RENDER PRODUCTS
 // ==========================
@@ -130,9 +154,13 @@ async function renderTrendingProducts(products) {
 
         }
 
+        const promotion =
+            await getProductPromotion(product.id);
+
         html += createTrendingProductCard(
             product,
-            checkWishlist
+            checkWishlist,
+            promotion
         );
 
     }
@@ -141,22 +169,49 @@ async function renderTrendingProducts(products) {
 
 }
 
+
+
 // ==========================
 // PRODUCT CARD
 // ==========================
 
 function createTrendingProductCard(
     product,
-    checkWishlist = false
+    checkWishlist = false,
+    promotion = null
 ) {
 
     const imageUrl =
         product.thumbnailUrl ||
         "img/shop/catalog/06.jpg";
 
-    const hasDiscount =
-        product.discountPrice &&
-        product.discountPrice < product.price;
+    let discountPrice = product.price;
+    let hasDiscount = false;
+
+    if (promotion) {
+
+        if (promotion.discountType === "PERCENTAGE") {
+
+            discountPrice =
+                product.price -
+                product.price *
+                promotion.discountValue / 100;
+
+        } else {
+
+            discountPrice =
+                product.price -
+                promotion.discountValue;
+
+        }
+
+        if (discountPrice < 0) {
+            discountPrice = 0;
+        }
+
+        hasDiscount =
+            discountPrice < product.price;
+    }
 
     return `
 
@@ -171,9 +226,9 @@ function createTrendingProductCard(
                         <span class="badge badge-danger badge-shadow">
 
                             -${calculateDiscount(
-                            product.price,
-                            product.discountPrice
-                        )}%
+                                product.price,
+                                discountPrice
+                            )}%
             
                                     </span>
                                     `
@@ -232,7 +287,7 @@ function createTrendingProductCard(
             `
                                     <span class="text-accent">
 
-                                        ${formatPrice(product.discountPrice)}
+                                        ${formatPrice(discountPrice)}
 
                                     </span>
 

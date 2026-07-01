@@ -239,9 +239,13 @@ async function renderProducts(products) {
                             );
                         }
 
+                        const promotion =
+                            await getProductPromotion(product.id);
+
                         return createProductCard(
                             product,
-                            checkWishlist
+                            checkWishlist,
+                            promotion
                         );
                     }
                 )
@@ -263,23 +267,81 @@ async function renderProducts(products) {
  * PRODUCT CARD
  * ==========================
  */
-function createProductCard(product, checkWishlist) {
+function createProductCard(
+    product,
+    checkWishlist,
+    promotion = null
+) {
 
     const imageUrl =
         product.thumbnailUrl ||
         "img/shop/catalog/06.jpg";
 
-    const hasDiscount =
-        product.discountPrice &&
-        product.discountPrice < product.price;
+    let discountPrice =
+        Number(product.price);
 
-    const discountPercent = hasDiscount
-        ? calculateDiscount(product.price, product.discountPrice)
-        : 0;
+    let hasDiscount = false;
 
-    const saveMoney = hasDiscount
-        ? product.price - product.discountPrice
-        : 0;
+    if (promotion) {
+
+        if (promotion.discountType === "PERCENTAGE") {
+
+            discountPrice =
+                Number(product.price) -
+                Number(product.price) *
+                Number(promotion.discountValue) / 100;
+
+        } else {
+
+            discountPrice =
+                Number(product.price) -
+                Number(promotion.discountValue);
+
+        }
+
+        if (promotion.maxDiscountAmount != null) {
+
+            const maxDiscount =
+                Number(promotion.maxDiscountAmount);
+
+            const realDiscount =
+                Number(product.price) -
+                discountPrice;
+
+            if (realDiscount > maxDiscount) {
+
+                discountPrice =
+                    Number(product.price) -
+                    maxDiscount;
+
+            }
+
+        }
+
+        if (discountPrice < 0) {
+
+            discountPrice = 0;
+
+        }
+
+        hasDiscount =
+            discountPrice < Number(product.price);
+
+    }
+
+    const discountPercent =
+        hasDiscount
+            ? calculateDiscount(
+                Number(product.price),
+                discountPrice
+            )
+            : 0;
+
+    const saveMoney =
+        hasDiscount
+            ? Number(product.price) -
+            discountPrice
+            : 0;
 
     return `
         <div class="col-md-4 col-sm-6 px-2 mb-4">
@@ -295,7 +357,15 @@ function createProductCard(product, checkWishlist) {
                             </span>
 
                             <span class="badge badge-warning"
-                                  style="position:absolute;top:12px;right:12px;z-index:5;">
+                                  style="
+                                    position:absolute;
+                                    top:12px;
+                                    left:12px;
+                                    z-index:5;
+                                    width:auto;
+                                    display:inline-block;
+                                    white-space:nowrap;
+                                  ">
                                 SALE
                             </span>
                         `
@@ -346,7 +416,7 @@ function createProductCard(product, checkWishlist) {
         hasDiscount
             ? `
                                     <span class="text-danger font-weight-bold h6">
-                                        ${formatPrice(product.discountPrice)}
+                                        ${formatPrice(discountPrice)}
                                     </span>
 
                                     <br>
@@ -923,4 +993,31 @@ function scrollToProducts() {
         behavior: "smooth",
         block: "start"
     });
+}
+
+async function getProductPromotion(productId) {
+
+    try {
+
+        const response = await fetch(
+            `http://localhost:8081/api/v1/seller/promotions/${productId}/product`
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        return await response.json();
+
+    } catch (error) {
+
+        console.error(
+            "Promotion error:",
+            error
+        );
+
+        return null;
+
+    }
+
 }

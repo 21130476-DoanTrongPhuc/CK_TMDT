@@ -32,4 +32,12 @@ public class OrderItemDetailResponse {
     private String customNote;
 
     private String customImage;
+
+    private BigDecimal originalPrice;
+
+    private BigDecimal discountPrice;
+
+    private BigDecimal discountAmount;
+
+    private String promotionName;
 }

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PromotionRepository extends JpaRepository<Promotion, Long> {
@@ -22,14 +23,48 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     Optional<Promotion> findByCodeAndActiveTrue(String code);
 
+    /**
+     * Lấy tất cả promotion có thể áp dụng cho sản phẩm
+     */
+    @Query("""
+        SELECT p
+        FROM Promotion p
+        WHERE p.active = true
+        AND p.applyType = PRODUCT
+        AND CURRENT_TIMESTAMP BETWEEN p.startDate AND p.endDate
+        AND p.seller.id = :sellerId
+        AND (
+                p.product.id = :productId
+                OR
+                p.product IS NULL
+        )
+    """)
+    List<Promotion> findAvailablePromotion(
+            @Param("sellerId") Long sellerId,
+            @Param("productId") Long productId
+    );
+
     @Query("""
     SELECT p
     FROM Promotion p
-    WHERE p.product.id = :productId
-      AND p.active = true
-      AND CURRENT_TIMESTAMP BETWEEN p.startDate AND p.endDate
+    WHERE p.active = true
+      AND p.applyType = com.example.OneNightProject.promotion.enums.ApplyType.PRODUCT
+      AND p.product.id = :productId
+      AND p.startDate <= CURRENT_TIMESTAMP
+      AND p.endDate >= CURRENT_TIMESTAMP
 """)
-    Promotion findActivePromotionByProduct(
-            @Param("productId") Long productId
-    );
+    List<Promotion> findProductPromotions(Long productId);
+
+
+    @Query("""
+    SELECT p
+    FROM Promotion p
+    WHERE p.active = true
+      AND p.applyType = com.example.OneNightProject.promotion.enums.ApplyType.PRODUCT
+      AND p.product IS NULL
+      AND p.seller.id = :sellerId
+      AND p.startDate <= CURRENT_TIMESTAMP
+      AND p.endDate >= CURRENT_TIMESTAMP
+""")
+    List<Promotion> findSellerPromotions(Long sellerId);
 }

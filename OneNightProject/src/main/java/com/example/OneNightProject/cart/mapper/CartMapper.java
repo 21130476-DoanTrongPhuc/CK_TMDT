@@ -1,17 +1,12 @@
 package com.example.OneNightProject.cart.mapper;
 
-import com.example.OneNightProject.cart.dto.request.CartItemRequest;
-import com.example.OneNightProject.cart.dto.request.CartRequest;
 import com.example.OneNightProject.cart.dto.response.CartItemResponse;
 import com.example.OneNightProject.cart.dto.response.CartResponse;
 import com.example.OneNightProject.cart.entity.Cart;
 import com.example.OneNightProject.cart.entity.CartItem;
-import com.example.OneNightProject.product.dto.request.ProductRequest;
 import com.example.OneNightProject.product.dto.response.ProductImageResponse;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
 import com.example.OneNightProject.product.entity.Product;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -52,19 +47,32 @@ public class CartMapper {
                 .build();
     }
 
-    private CartItemResponse toItemResponse(
-            CartItem item
-    ) {
+    private CartItemResponse toItemResponse(CartItem item) {
 
-        BigDecimal itemTotal =
-                item.getProduct().getPrice()
+        BigDecimal originalPrice =
+                item.getOriginalPrice()
                         .multiply(
                                 BigDecimal.valueOf(
                                         item.getQuantity()
                                 )
                         );
 
+        BigDecimal discountPrice =
+                item.getUnitPrice()
+                        .multiply(BigDecimal.valueOf(item.getQuantity()));
+
+        BigDecimal discountAmount =
+                item.getDiscountAmount()
+                        .multiply(
+                                BigDecimal.valueOf(
+                                        item.getQuantity()
+                                )
+                        );
+
+        BigDecimal itemTotal = discountPrice;
+
         if (Boolean.TRUE.equals(item.isCustomized())) {
+
             itemTotal =
                     itemTotal.add(
                             item.getPriceCustomProduct()
@@ -94,22 +102,28 @@ public class CartMapper {
                 .id(item.getId())
                 .quantity(item.getQuantity())
                 .customized(item.isCustomized())
-                .priceCustomProduct(
-                        item.getPriceCustomProduct()
-                )
+                .priceCustomProduct(item.getPriceCustomProduct())
+
+                // Promotion Snapshot
+                .originalPrice(originalPrice)
+                .discountPrice(discountPrice)
+                .discountAmount(discountAmount)
                 .itemTotal(itemTotal)
-                .product(toProductResponse(
-                        item.getProduct()
-                ))
+                .promotionName(item.getPromotionName())
+
+                .product(
+                        toProductResponse(
+                                item.getProduct()
+                        )
+                )
+
                 .customText(customText)
                 .customNote(customNote)
                 .customImage(customImage)
                 .build();
     }
 
-    private ProductResponse toProductResponse(
-            Product product
-    ) {
+    private ProductResponse toProductResponse(Product product) {
 
         List<ProductImageResponse> images =
                 product.getImages() == null
@@ -117,10 +131,10 @@ public class CartMapper {
                         : product.getImages()
                         .stream()
                         .map(img ->
-                                new ProductImageResponse(
-                                        img.getId(),
-                                        img.getImageUrl()
-                                )
+                             new ProductImageResponse(
+                                     img.getId(),
+                                     img.getImageUrl()
+                             )
                         )
                         .toList();
 
@@ -134,4 +148,5 @@ public class CartMapper {
                 .images(images)
                 .build();
     }
+
 }

@@ -1,4 +1,29 @@
+async function getProductPromotion(productId) {
 
+    try {
+
+        const response =
+            await fetch(
+                `http://localhost:8081/api/v1/seller/promotions/${productId}/product`
+            );
+
+        if (!response.ok) {
+
+            return null;
+
+        }
+
+        return await response.json();
+
+    } catch (e) {
+
+        console.error(e);
+
+        return null;
+
+    }
+
+}
 
 /**
  * Load sản phẩm theo danh mục
@@ -101,6 +126,9 @@ async function renderProducts(products) {
 
             let checkWishlist = false;
 
+            const promotion =
+                await getProductPromotion(product.id);
+
             if (token) {
 
                 try {
@@ -141,11 +169,76 @@ async function renderProducts(products) {
             const image =
                 "img/shop/catalog/06.jpg";
 
+            let discountPrice = product.price;
+
+            let hasDiscount = false;
+
+            if (promotion) {
+
+                if (promotion.discountType === "PERCENTAGE") {
+
+                    discountPrice =
+                        product.price -
+                        (
+                            product.price *
+                            promotion.discountValue / 100
+                        );
+
+                } else {
+
+                    discountPrice =
+                        product.price -
+                        promotion.discountValue;
+
+                }
+
+                if (promotion.maxDiscountAmount != null) {
+
+                    const maxDiscount =
+                        promotion.maxDiscountAmount;
+
+                    const actualDiscount =
+                        product.price - discountPrice;
+
+                    if (actualDiscount > maxDiscount) {
+
+                        discountPrice =
+                            product.price - maxDiscount;
+
+                    }
+
+                }
+
+                if (discountPrice < 0) {
+
+                    discountPrice = 0;
+
+                }
+
+                hasDiscount =
+                    discountPrice < product.price;
+
+            }
+
             html += `
 
                 <div class="col-lg-4 col-6 px-2 mb-4">
 
                     <div class="card product-card card-static">
+                    
+                    ${hasDiscount
+                            ? `
+                    <span class="badge badge-danger badge-shadow">
+            
+                        -${calculateDiscount(
+                                product.price,
+                                discountPrice
+                            )}%
+            
+                    </span>
+                `
+                            : ""
+                        }
 
                         <a
                             href="#"
@@ -190,15 +283,39 @@ async function renderProducts(products) {
 
                             <div class="d-flex justify-content-between">
 
-                                <div class="product-price">
-
-                                    <span class="text-accent">
-
-                                        ${formatPrice(product.price)}
-
-                                    </span>
-
-                                </div>
+                            <div class="product-price">
+                            
+                                ${
+                                            hasDiscount
+                                                ?
+                            
+                                                `
+                                        <span class="text-accent">
+                            
+                                            ${formatPrice(discountPrice)}
+                            
+                                        </span>
+                            
+                                        <del
+                                            class="font-size-sm text-muted ml-2">
+                            
+                                            ${formatPrice(product.price)}
+                            
+                                        </del>
+                                        `
+                            
+                                                :
+                            
+                                                `
+                                        <span class="text-accent">
+                            
+                                            ${formatPrice(product.price)}
+                            
+                                        </span>
+                                        `
+                                        }
+                            
+                            </div>
 
                                 <div class="star-rating">
 
@@ -390,6 +507,25 @@ function renderStars(rating = 0) {
     }
 
     return html;
+
+}
+
+function calculateDiscount(
+    originalPrice,
+    discountPrice
+) {
+
+    return Math.round(
+
+        (
+            (
+                originalPrice -
+                discountPrice
+            ) /
+            originalPrice
+        ) * 100
+
+    );
 
 }
 

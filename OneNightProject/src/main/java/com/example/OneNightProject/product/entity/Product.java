@@ -70,6 +70,8 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<Review> reviews;
 
+    private BigDecimal discountPrice;
+
     @JoinColumn(name = "allow_customization")
     private Boolean allowCustomization;
 
