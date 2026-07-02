@@ -110,7 +110,9 @@ public class PaymentServiceImpl {
         Payment payment = paymentRepository.findByOrder(order.getId());
 
         boolean isCustomized =
-                orderRepository.isOrderCustomized(orderId);
+                order.getOrderItems()
+                        .stream()
+                        .anyMatch(OrderItem::isCustomized);
 
         BigDecimal amountToPay;
 
@@ -232,12 +234,20 @@ public class PaymentServiceImpl {
 
         for (OrderItem item : orderItems) {
 
-            if (item.isCustomized()) {
-
-                total = total.add(
-                        item.getPriceCustomProduct()
-                );
+            if (!item.isCustomized()) {
+                continue;
             }
+
+            BigDecimal customPrice =
+                    item.getPriceCustomProduct() == null
+                            ? BigDecimal.ZERO
+                            : item.getPriceCustomProduct();
+
+            total = total.add(
+                    customPrice.multiply(
+                            BigDecimal.valueOf(item.getQuantity())
+                    )
+            );
         }
 
         return total;
@@ -293,9 +303,9 @@ public class PaymentServiceImpl {
             );
 
             boolean isCustomized =
-                    orderRepository.isOrderCustomized(
-                            order.getId()
-                    );
+                    order.getOrderItems()
+                            .stream()
+                            .anyMatch(OrderItem::isCustomized);
 
             /*
              * Custom + COD
@@ -444,7 +454,9 @@ public class PaymentServiceImpl {
                         new RuntimeException("Order not found"));
 
         boolean isCustomized =
-                orderRepository.isOrderCustomized(orderId);
+                order.getOrderItems()
+                        .stream()
+                        .anyMatch(OrderItem::isCustomized);
 
         /*
          * Không cho COD nếu có custom
@@ -524,8 +536,14 @@ public class PaymentServiceImpl {
         response.setOrderId(order.getId());
         response.setPaymentMethod(payment.getMethod());
         response.setPaymentStatus(payment.getStatus());
-        response.setCustomized(false);
-        response.setTransactionId("I dont know");
+        response.setCustomized(
+                order.getOrderItems()
+                        .stream()
+                        .anyMatch(OrderItem::isCustomized)
+        );
+        response.setTransactionId(
+                payment.getTransactionId()
+        );
         response.setAmount(order.getTotalPrice());
         response.setOrderStatus(order.getStatus());
         response.setOrderPaymentStatus(order.getPaymentStatus());

@@ -1,9 +1,11 @@
 package com.example.OneNightProject.cart.mapper;
 
+import com.example.OneNightProject.cart.dto.response.CartItemCustomizationResponse;
 import com.example.OneNightProject.cart.dto.response.CartItemResponse;
 import com.example.OneNightProject.cart.dto.response.CartResponse;
 import com.example.OneNightProject.cart.entity.Cart;
 import com.example.OneNightProject.cart.entity.CartItem;
+import com.example.OneNightProject.cart.entity.CartItemCustomization;
 import com.example.OneNightProject.product.dto.response.ProductImageResponse;
 import com.example.OneNightProject.product.dto.response.ProductResponse;
 import com.example.OneNightProject.product.entity.Product;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class CartMapper {
@@ -50,7 +53,8 @@ public class CartMapper {
     private CartItemResponse toItemResponse(CartItem item) {
 
         BigDecimal originalPrice =
-                item.getOriginalPrice()
+                Optional.ofNullable(item.getOriginalPrice())
+                        .orElse(BigDecimal.ZERO)
                         .multiply(
                                 BigDecimal.valueOf(
                                         item.getQuantity()
@@ -58,51 +62,42 @@ public class CartMapper {
                         );
 
         BigDecimal discountPrice =
-                item.getUnitPrice()
-                        .multiply(BigDecimal.valueOf(item.getQuantity()));
-
-        BigDecimal discountAmount =
-                item.getDiscountAmount()
+                Optional.ofNullable(item.getUnitPrice())
+                        .orElse(BigDecimal.ZERO)
                         .multiply(
                                 BigDecimal.valueOf(
                                         item.getQuantity()
                                 )
                         );
 
-        BigDecimal itemTotal = discountPrice;
+        BigDecimal discountAmount =
+                Optional.ofNullable(item.getDiscountAmount())
+                        .orElse(BigDecimal.ZERO)
+                        .multiply(
+                                BigDecimal.valueOf(
+                                        item.getQuantity()
+                                )
+                        );
 
-        if (Boolean.TRUE.equals(item.isCustomized())) {
+        BigDecimal customizationPrice =
+                Optional.ofNullable(item.getPriceCustomProduct())
+                        .orElse(BigDecimal.ZERO);
 
-            itemTotal =
-                    itemTotal.add(
-                            item.getPriceCustomProduct()
-                    );
-        }
-
-        String customText = null;
-        String customNote = null;
-        String customImage = null;
-
-        if (item.getCustomization() != null) {
-
-            customText =
-                    item.getCustomization()
-                            .getCustom_text();
-
-            customNote =
-                    item.getCustomization()
-                            .getCustom_note();
-
-            customImage =
-                    item.getCustomization()
-                            .getCustom_image();
-        }
+        BigDecimal itemTotal =
+                Optional.ofNullable(item.getUnitPrice())
+                        .orElse(BigDecimal.ZERO)
+                        .add(customizationPrice)
+                        .multiply(
+                                BigDecimal.valueOf(
+                                        item.getQuantity()
+                                )
+                        );
 
         return CartItemResponse.builder()
                 .id(item.getId())
                 .quantity(item.getQuantity())
                 .customized(item.isCustomized())
-                .priceCustomProduct(item.getPriceCustomProduct())
+                .priceCustomProduct(customizationPrice)
 
                 // Promotion Snapshot
                 .originalPrice(originalPrice)
@@ -117,10 +112,58 @@ public class CartMapper {
                         )
                 )
 
-                .customText(customText)
-                .customNote(customNote)
-                .customImage(customImage)
+                .customizations(
+                        mapCustomizations(
+                                item.getCustomizations()
+                        )
+                )
+
                 .build();
+    }
+
+    private List<CartItemCustomizationResponse> mapCustomizations(
+            List<CartItemCustomization> customizations
+    ) {
+
+        if (customizations == null) {
+            return Collections.emptyList();
+        }
+
+        return customizations.stream()
+                .map(customization ->
+                        CartItemCustomizationResponse.builder()
+
+                                .fieldId(
+                                        customization.getField().getId()
+                                )
+
+                                .fieldName(
+                                        customization.getField().getName()
+                                )
+
+                                .optionId(
+                                        customization.getOption() == null
+                                                ? null
+                                                : customization.getOption().getId()
+                                )
+
+                                .optionLabel(
+                                        customization.getOption() == null
+                                                ? null
+                                                : customization.getOption().getLabel()
+                                )
+
+                                .textValue(
+                                        customization.getTextValue()
+                                )
+
+                                .extraPrice(
+                                        customization.getExtraPrice()
+                                )
+
+                                .build()
+                )
+                .toList();
     }
 
     private ProductResponse toProductResponse(Product product) {

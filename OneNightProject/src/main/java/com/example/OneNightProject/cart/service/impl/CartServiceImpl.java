@@ -1,34 +1,50 @@
 package com.example.OneNightProject.cart.service.impl;
 
 import com.example.OneNightProject.auth.service.JwtService;
+import com.example.OneNightProject.cart.dto.request.CartItemCustomizationRequest;
 import com.example.OneNightProject.cart.dto.request.CartItemRequest;
 import com.example.OneNightProject.cart.dto.request.CartUpdateRequest;
 import com.example.OneNightProject.cart.dto.response.CartResponse;
 import com.example.OneNightProject.cart.dto.response.PromotionResult;
 import com.example.OneNightProject.cart.entity.Cart;
 import com.example.OneNightProject.cart.entity.CartItem;
-import com.example.OneNightProject.cart.entity.CartItemCustomized;
+import com.example.OneNightProject.cart.entity.CartItemCustomization;
 import com.example.OneNightProject.cart.mapper.CartMapper;
+import com.example.OneNightProject.cart.repository.CartItemCustomizationRepository;
 import com.example.OneNightProject.cart.repository.CartItemRepository;
 import com.example.OneNightProject.cart.repository.CartRepository;
 import com.example.OneNightProject.cart.service.CartService;
 import com.example.OneNightProject.cart.service.PromotionCalculatorService;
+import com.example.OneNightProject.product.entity.CustomField;
+import com.example.OneNightProject.product.entity.CustomFieldOption;
 import com.example.OneNightProject.product.entity.Product;
+import com.example.OneNightProject.product.enums.CustomFieldType;
+import com.example.OneNightProject.product.repository.CustomFieldOptionRepository;
+import com.example.OneNightProject.product.repository.CustomFieldRepository;
 import com.example.OneNightProject.product.repository.ProductRepository;
 import com.example.OneNightProject.promotion.entity.Promotion;
 import com.example.OneNightProject.user.entity.Users;
 import com.example.OneNightProject.user.repository.CustomerRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.flywaydb.core.internal.util.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class CartServiceImpl implements CartService {
+
+    private final CustomFieldRepository customFieldRepository;
+
+    private final CustomFieldOptionRepository optionRepository;
+
+    private final CartItemCustomizationRepository customizationRepository;
 
     private final CartRepository cartRepository;
 
@@ -106,9 +122,8 @@ public class CartServiceImpl implements CartService {
         }
 
         boolean isCustomized =
-                hasText(request.getCustomText())
-                        || hasText(request.getCustomNote())
-                        || hasText(request.getCustomImage());
+                request.getCustomizations() != null
+                        && !request.getCustomizations().isEmpty();
 
         /*
          * CUSTOM PRODUCT
@@ -127,10 +142,6 @@ public class CartServiceImpl implements CartService {
             );
 
             cartItem.setCustomized(true);
-
-            cartItem.setPriceCustomProduct(
-                    BigDecimal.ZERO
-            );
 
             cartItem.setOriginalPrice(
                     promotionResult.getOriginalPrice()
@@ -156,22 +167,23 @@ public class CartServiceImpl implements CartService {
 
             }
 
-            CartItemCustomized customized =
-                    CartItemCustomized.builder()
-                            .cartItem(cartItem)
-                            .custom_text(
-                                    request.getCustomText()
-                            )
-                            .custom_note(
-                                    request.getCustomNote()
-                            )
-                            .custom_image(
-                                    request.getCustomImage()
-                            )
-                            .build();
+            cartItemRepository.save(cartItem);
 
-            cartItem.setCustomization(
-                    customized
+            BigDecimal customPrice =
+                    buildCustomization(
+                            cartItem,
+                            product,
+                            request.getCustomizations()
+                    );
+
+            cartItem.setPriceCustomProduct(
+                    customPrice
+            );
+
+            cartItem.setUnitPrice(
+                    promotionResult
+                            .getFinalPrice()
+                            .add(customPrice)
             );
 
             cart.addCartItem(cartItem);
@@ -184,6 +196,8 @@ public class CartServiceImpl implements CartService {
         /*
          * NORMAL PRODUCT
          */
+
+
         Optional<CartItem> existingItem =
                 cart.getCartItems()
                         .stream()
@@ -255,6 +269,10 @@ public class CartServiceImpl implements CartService {
                     new CartItem();
 
             cartItem.setCart(cart);
+
+            cartItem.setPriceCustomProduct(
+                    BigDecimal.ZERO
+            );
 
             cartItem.setProduct(product);
 
@@ -497,11 +515,202 @@ public class CartServiceImpl implements CartService {
                 });
     }
 
-    private boolean hasText(
-            String value
+    private CustomField getField(
+            Product product,
+            Long fieldId
     ) {
 
-        return value != null
-                && !value.trim().isEmpty();
+        return customFieldRepository
+
+                .findById(fieldId)
+
+                .filter(field ->
+                        field.getProduct()
+                                .getId()
+                                .equals(product.getId())
+                )
+
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Custom field không hợp lệ"
+                        )
+                );
+
+    }
+
+    private CustomFieldOption getOption(
+            Long fieldId,
+            Long optionId
+    ) {
+
+        return optionRepository
+
+                .findByIdAndFieldId(
+                        optionId,
+                        fieldId
+                )
+
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Custom option không hợp lệ"
+                        )
+                );
+
+    }
+    private BigDecimal buildCustomization(
+            CartItem cartItem,
+            Product product,
+            List<CartItemCustomizationRequest> requests
+    ) {
+
+        if (requests == null || requests.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal totalExtraPrice = BigDecimal.ZERO;
+
+        for (CartItemCustomizationRequest request : requests) {
+
+            CustomField field =
+                    getField(
+                            product,
+                            request.getFieldId()
+                    );
+
+            CartItemCustomization customization =
+                    new CartItemCustomization();
+
+            customization.setCartItem(cartItem);
+
+            customization.setField(field);
+
+            customization.setCreatedAt(
+                    LocalDateTime.now()
+            );
+
+            switch (field.getFieldType()) {
+
+                case TEXT:
+                case TEXTAREA:
+
+                    if (field.getRequired()
+                            && !StringUtils.hasText(request.getTextValue())) {
+
+                        throw new RuntimeException(
+                                field.getName() + " là bắt buộc"
+                        );
+
+                    }
+
+                    customization.setTextValue(
+                            request.getTextValue()
+                    );
+
+                    customization.setExtraPrice(
+                            BigDecimal.ZERO
+                    );
+
+                    break;
+
+                case SELECT:
+                case RADIO:
+
+                    if (request.getOptionIds() == null
+                            || request.getOptionIds().size() != 1) {
+
+                        throw new RuntimeException(
+                                field.getName() + " chỉ được chọn một giá trị"
+                        );
+                    }
+
+                    CustomFieldOption option =
+                            getOption(
+                                    field.getId(),
+                                    request.getOptionIds().get(0)
+                            );
+
+                    customization.setOption(option);
+
+                    customization.setExtraPrice(
+                            option.getExtraPrice()
+                    );
+
+                    totalExtraPrice =
+                            totalExtraPrice.add(
+                                    option.getExtraPrice()
+                            );
+
+                    break;
+
+                case CHECKBOX:
+
+                    if (request.getOptionIds() == null
+                            || request.getOptionIds().isEmpty()) {
+
+                        throw new RuntimeException(
+                                field.getName() + " chưa được chọn"
+                        );
+                    }
+
+                    for (Long optionId : request.getOptionIds()) {
+
+                        CustomFieldOption checkboxOption =
+                                getOption(
+                                        field.getId(),
+                                        optionId
+                                );
+
+                        CartItemCustomization checkboxCustomization =
+                                new CartItemCustomization();
+
+                        checkboxCustomization.setCartItem(cartItem);
+
+                        checkboxCustomization.setField(field);
+
+                        checkboxCustomization.setOption(checkboxOption);
+
+                        checkboxCustomization.setExtraPrice(
+                                checkboxOption.getExtraPrice()
+                        );
+
+                        checkboxCustomization.setCreatedAt(
+                                LocalDateTime.now()
+                        );
+
+                        cartItem.getCustomizations()
+                                .add(checkboxCustomization);
+
+                        customizationRepository.save(
+                                checkboxCustomization
+                        );
+
+                        totalExtraPrice =
+                                totalExtraPrice.add(
+                                        checkboxOption.getExtraPrice()
+                                );
+                    }
+
+                    continue;
+
+                default:
+
+                    throw new RuntimeException(
+                            "Field Type không hỗ trợ"
+                    );
+
+            }
+
+            cartItem.getCustomizations().add(
+                    customization
+            );
+
+            customizationRepository.save(
+                    customization
+            );
+
+        }
+
+        return totalExtraPrice;
+
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends
@@ -59,4 +60,11 @@ public interface ProductRepository extends
             @Param("status") ProductStatus status,
             @Param("keyword") String keyword,
             Pageable pageable);
+
+    Optional<Product> findByIdAndSellerId(
+            Long productId,
+            Long sellerId
+    );
+
+
 }

@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 @Data
@@ -36,10 +37,6 @@ public class CartItemResponse {
 
     private ProductResponse product;
 
-    private String customText;
-
-    private String customNote;
-
-    private String customImage;
+    private List<CartItemCustomizationResponse> customizations;
 
 }

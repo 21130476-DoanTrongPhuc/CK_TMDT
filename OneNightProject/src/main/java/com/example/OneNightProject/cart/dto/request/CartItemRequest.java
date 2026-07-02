@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @Data
 public class CartItemRequest {
     private Long cartId;
@@ -12,9 +14,5 @@ public class CartItemRequest {
 
     private Integer quantity;
 
-    private String customText;
-
-    private String customNote;
-
-    private String customImage;
+    private List<CartItemCustomizationRequest> customizations;
 }

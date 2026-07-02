@@ -9,6 +9,7 @@ import SellerProducts from './pages/seller/SellerProducts';
 import SellerOrders from './pages/seller/SellerOrders';
 import SellerCustomOrders from './pages/seller/SellerCustomOrders';
 import SellerPayments from './pages/seller/SellerPayments';
+import SellerCustom from './pages/seller/SellerCustomizationStudio';
 import SellerPromotions from './pages/seller/SellerPromotions';
 import AdminReviews from './pages/admin/AdminReviews';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -42,6 +43,7 @@ function AppRoutes() {
         <Route index element={<Navigate to={defaultPath} replace />} />
         <Route path="seller/dashboard" element={<SellerDashboard />} />
         <Route path="seller/products" element={<SellerProducts />} />
+        <Route path="seller/products/custom" element={<SellerCustom />} />
         <Route path="seller/orders" element={<SellerOrders />} />
         <Route path="seller/custom-orders" element={<SellerCustomOrders />} />
         <Route path="seller/payments" element={<SellerPayments />} />

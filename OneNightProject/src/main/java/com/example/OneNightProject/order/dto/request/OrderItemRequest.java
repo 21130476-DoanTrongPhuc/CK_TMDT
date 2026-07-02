@@ -2,6 +2,8 @@ package com.example.OneNightProject.order.dto.request;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class OrderItemRequest {
 
@@ -9,9 +11,6 @@ public class OrderItemRequest {
 
     private Integer quantity;
 
-    private String customText;
+    private List<OrderItemCustomizationRequest> customizations;
 
-    private String customNote;
-
-    private String customImage;
 }

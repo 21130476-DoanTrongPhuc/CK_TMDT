@@ -10,6 +10,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "cart_items")
@@ -44,12 +46,10 @@ public class CartItem {
     @Column(nullable = false)
     private BigDecimal priceCustomProduct = BigDecimal.ZERO;
 
-    @OneToOne(
-            mappedBy = "cartItem",
+    @OneToMany(mappedBy = "cartItem",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private CartItemCustomized customization;
+            orphanRemoval = true)
+    private List<CartItemCustomization> customizations = new ArrayList<>();
 
     /**
      * Snapshot promotion

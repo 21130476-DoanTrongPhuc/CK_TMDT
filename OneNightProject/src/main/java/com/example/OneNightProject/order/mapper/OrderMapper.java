@@ -1,33 +1,16 @@
 package com.example.OneNightProject.order.mapper;
 
-import com.example.OneNightProject.cart.entity.CartItem;
-import com.example.OneNightProject.cart.entity.CartItemCustomized;
-import com.example.OneNightProject.cart.repository.CartItemCustomizedRepository;
-import com.example.OneNightProject.cart.repository.CartItemRepository;
-import com.example.OneNightProject.order.dto.request.OrderRequest;
+
 import com.example.OneNightProject.order.dto.response.*;
 import com.example.OneNightProject.order.entity.Order;
 import com.example.OneNightProject.order.entity.OrderItem;
-import com.example.OneNightProject.order.entity.OrderItemCustomized;
-import com.example.OneNightProject.order.enums.OrderStatus;
-import com.example.OneNightProject.order.enums.PaymentStatusOrder;
-import com.example.OneNightProject.order.repository.OrderItemCustomizedRepository;
-import com.example.OneNightProject.order.repository.OrderItemRepository;
-import com.example.OneNightProject.payment.enums.PaymentStatus;
-import com.example.OneNightProject.product.entity.Product;
-import com.example.OneNightProject.product.repository.ProductRepository;
-import com.example.OneNightProject.user.entity.UserProfile;
-import com.example.OneNightProject.user.repository.CustomerProfileRepository;
-import com.example.OneNightProject.user.repository.CustomerRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.OneNightProject.order.entity.OrderItemCustomization;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class OrderMapper {
@@ -131,18 +114,25 @@ public class OrderMapper {
     }
 
     private BigDecimal calculateItemTotal(OrderItem item) {
-        int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
-        BigDecimal basePrice = item.getPrice() == null
-                ? BigDecimal.ZERO
-                : item.getPrice().multiply(BigDecimal.valueOf(quantity));
 
-        if (item.isCustomized() &&
-                item.getPriceCustomProduct() != null &&
-                item.getPriceCustomProduct().compareTo(BigDecimal.ZERO) > 0) {
-            return item.getPriceCustomProduct();
-        }
+        int quantity =
+                item.getQuantity() == null
+                        ? 0
+                        : item.getQuantity();
 
-        return basePrice;
+        BigDecimal unitPrice =
+                item.getPrice() == null
+                        ? BigDecimal.ZERO
+                        : item.getPrice();
+
+        BigDecimal customizationPrice =
+                item.getPriceCustomProduct() == null
+                        ? BigDecimal.ZERO
+                        : item.getPriceCustomProduct();
+
+        return unitPrice
+                .add(customizationPrice)
+                .multiply(BigDecimal.valueOf(quantity));
     }
 
     public OrderDetailResponse toDetailResponse(
@@ -248,26 +238,59 @@ public class OrderMapper {
                             item.getPriceCustomProduct()
                     );
 
-                    if(item.getCustomization() != null){
-
-                        response.setCustomText(
-                                item.getCustomization()
-                                        .getCustom_text()
-                        );
-
-                        response.setCustomNote(
-                                item.getCustomization()
-                                        .getCustom_note()
-                        );
-
-                        response.setCustomImage(
-                                item.getCustomization()
-                                        .getCustom_image()
-                        );
-                    }
+                    response.setCustomizations(
+                            mapCustomizations(
+                                    item.getCustomizations()
+                            )
+                    );
 
                     return response;
                 })
+                .toList();
+    }
+
+    private List<OrderItemCustomizationResponse> mapCustomizations(
+            List<OrderItemCustomization> customizations
+    ) {
+
+        if (customizations == null) {
+            return Collections.emptyList();
+        }
+
+        return customizations.stream()
+                .map(customization ->
+                        OrderItemCustomizationResponse.builder()
+
+                                .fieldId(
+                                        customization.getField().getId()
+                                )
+
+                                .fieldName(
+                                        customization.getField().getName()
+                                )
+
+                                .optionId(
+                                        customization.getOption() == null
+                                                ? null
+                                                : customization.getOption().getId()
+                                )
+
+                                .optionLabel(
+                                        customization.getOption() == null
+                                                ? null
+                                                : customization.getOption().getLabel()
+                                )
+
+                                .textValue(
+                                        customization.getTextValue()
+                                )
+
+                                .extraPrice(
+                                        customization.getExtraPrice()
+                                )
+
+                                .build()
+                )
                 .toList();
     }
 }

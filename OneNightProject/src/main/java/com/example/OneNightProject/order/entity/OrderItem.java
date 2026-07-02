@@ -1,6 +1,5 @@
 package com.example.OneNightProject.order.entity;
 
-import com.example.OneNightProject.cart.entity.CartItemCustomized;
 import com.example.OneNightProject.product.entity.Product;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -8,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -35,12 +36,12 @@ public class OrderItem {
     private boolean isCustomized;
     @Column(name = "customization_price")
     private BigDecimal priceCustomProduct = BigDecimal.valueOf(0);
-    @OneToOne(
+    @OneToMany(
             mappedBy = "orderItem",
-            cascade = CascadeType.ALL
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
     )
-    @JsonManagedReference
-    private OrderItemCustomized customization;
+    private List<OrderItemCustomization> customizations = new ArrayList<>();
 
     private BigDecimal originalPrice;
 

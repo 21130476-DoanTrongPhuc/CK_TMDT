@@ -3,6 +3,7 @@ package com.example.OneNightProject.order.service.impl;
 import com.example.OneNightProject.auth.service.JwtService;
 import com.example.OneNightProject.cart.entity.Cart;
 import com.example.OneNightProject.cart.entity.CartItem;
+import com.example.OneNightProject.cart.entity.CartItemCustomization;
 import com.example.OneNightProject.cart.repository.CartItemRepository;
 import com.example.OneNightProject.cart.repository.CartRepository;
 import com.example.OneNightProject.order.dto.request.OrderFilterRequest;
@@ -12,9 +13,11 @@ import com.example.OneNightProject.order.dto.response.OrderListResponse;
 import com.example.OneNightProject.order.dto.response.OrderResponse;
 import com.example.OneNightProject.order.entity.Order;
 import com.example.OneNightProject.order.entity.OrderItem;
+import com.example.OneNightProject.order.entity.OrderItemCustomization;
 import com.example.OneNightProject.order.enums.OrderStatus;
 import com.example.OneNightProject.order.enums.PaymentStatusOrder;
 import com.example.OneNightProject.order.mapper.OrderMapper;
+import com.example.OneNightProject.order.repository.OrderItemCustomizationRepository;
 import com.example.OneNightProject.order.repository.OrderItemRepository;
 import com.example.OneNightProject.order.repository.OrderRepository;
 import com.example.OneNightProject.order.service.OrderService;
@@ -47,7 +50,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class OrderServiceImpl implements OrderService {
-
+    @Autowired
+    private final OrderItemCustomizationRepository orderItemCustomizationRepository;
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final OrderItemRepository orderItemRepository;
@@ -118,6 +122,10 @@ public class OrderServiceImpl implements OrderService {
     ) {
 
         order.getOrderItems().clear();
+
+        orderItemRepository.deleteAll(
+                order.getOrderItems()
+        );
 
         List<OrderItem> items =
                 buildOrderItems(
@@ -213,10 +221,45 @@ public class OrderServiceImpl implements OrderService {
                     ci.getPriceCustomProduct()
             );
 
+            copyCustomizations(ci, item);
+
             items.add(item);
         }
 
         return items;
+    }
+
+    private void copyCustomizations(
+            CartItem cartItem,
+            OrderItem orderItem
+    ) {
+
+        if (cartItem.getCustomizations() == null
+                || cartItem.getCustomizations().isEmpty()) {
+
+            return;
+        }
+
+        for (CartItemCustomization source : cartItem.getCustomizations()) {
+
+            OrderItemCustomization target =
+                    new OrderItemCustomization();
+
+            target.setOrderItem(orderItem);
+
+            target.setField(source.getField());
+
+            target.setOption(source.getOption());
+
+            target.setTextValue(source.getTextValue());
+
+            target.setExtraPrice(source.getExtraPrice());
+
+            target.setCreatedAt(LocalDateTime.now());
+
+            orderItem.getCustomizations().add(target);
+        }
+
     }
 
     private BigDecimal calculateTotal(List<CartItem> cartItems) {
@@ -225,17 +268,16 @@ public class OrderServiceImpl implements OrderService {
 
         for (CartItem ci : cartItems) {
 
-            BigDecimal itemTotal =
+            BigDecimal unitPrice =
                     ci.getUnitPrice()
-                            .multiply(
-                                    BigDecimal.valueOf(
-                                            ci.getQuantity()
-                                    )
-                            );
+                            .add(ci.getPriceCustomProduct());
 
-            if (ci.isCustomized()) {
-                itemTotal = itemTotal.add(ci.getPriceCustomProduct());
-            }
+            BigDecimal itemTotal =
+                    unitPrice.multiply(
+                            BigDecimal.valueOf(
+                                    ci.getQuantity()
+                            )
+                    );
 
             total = total.add(itemTotal);
         }

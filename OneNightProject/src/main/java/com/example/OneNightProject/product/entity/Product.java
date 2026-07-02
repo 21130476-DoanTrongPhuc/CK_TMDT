@@ -75,6 +75,11 @@ public class Product {
     @JoinColumn(name = "allow_customization")
     private Boolean allowCustomization;
 
+    @OneToMany(mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<CustomField> customFields = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
